@@ -34,17 +34,18 @@ module Aviator
         namespace_arr = [
           klass.provider,
           klass.service,
+          'Requests',
           klass.api_version,
           klass.endpoint_type
         ]
 
         namespace = namespace_arr.inject(root_namespace) do |namespace, sym|
-          const_name = sym.to_s.camelize
+          const_name = StrUtil.camelize(sym.to_s)
           namespace.const_set(const_name, Module.new) unless namespace.const_defined?(const_name, false)
           namespace.const_get(const_name, false)
         end
 
-        klassname = request_name.to_s.camelize
+        klassname = StrUtil.camelize(request_name.to_s)
 
         if namespace.const_defined?(klassname, false)
           raise RequestAlreadyDefinedError.new(namespace, klassname)
@@ -55,18 +56,30 @@ module Aviator
 
 
       def get_request_class(root_namespace, request_class_arr)
-        request_class_arr.inject(root_namespace) do |namespace, sym|
-          namespace.const_get(sym.to_s.camelize, false)
+        provider_specific = request_class_arr != [:request]
+
+        if provider_specific
+          full_request_class_arr = request_class_arr.dup
+          full_request_class_arr.insert(2, :requests) if provider_specific
+        else
+          full_request_class_arr = request_class_arr
+        end
+
+        full_request_class_arr.inject(root_namespace) do |namespace, sym|
+          namespace.const_get(StrUtil.camelize(sym.to_s), false)
         end
       rescue NameError => e
-        arr = ['..', '..'] + request_class_arr
-        arr[-1,1] = arr.last.to_s + '.rb'
-        path = Pathname.new(__FILE__).join(*arr.map{|i| i.to_s }).expand_path
+        if Aviator.const_defined?(StrUtil.camelize(full_request_class_arr[0].to_s))
+          provider = StrUtil.constantize("Aviator::#{ full_request_class_arr[0] }::Provider")
+          arr = ['..'] + full_request_class_arr
+          arr[-1,1] = arr.last.to_s + '.rb'
+          path = Pathname.new(provider.root_dir).join(*arr.map{|i| i.to_s }).expand_path
+        end
 
-        if path.exist?
+        if provider && path.exist?
           require path
-          request_class_arr.inject(root_namespace) do |namespace, sym|
-            namespace.const_get(sym.to_s.camelize, false)
+          full_request_class_arr.inject(root_namespace) do |namespace, sym|
+            namespace.const_get(StrUtil.camelize(sym.to_s), false)
           end
         else
           raise BaseRequestNotFoundError.new(request_class_arr)
@@ -80,7 +93,7 @@ module Aviator
 
   class << self
 
-    def define_request(request_name, options={ inherit: [:request] }, &block)
+    def define_request(request_name, options={ :inherit => [:request] }, &block)
       RequestBuilder.define_request self, request_name, options, &block
     end
 

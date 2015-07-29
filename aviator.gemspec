@@ -1,7 +1,9 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
 require 'aviator/version'
+require 'aviator/core/utils/compatibility'
 require 'rbconfig'
 
 Gem::Specification.new do |spec|
@@ -19,25 +21,25 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency 'faraday', '0.8.8'
-  spec.add_dependency 'activesupport', '>= 3.2.8'
-  spec.add_dependency 'thor', '~> 0.19.1'
-  spec.add_dependency 'terminal-table', '>= 1.4.5'
-  spec.add_dependency 'hashie'
+  # Runtime dependencies
+  spec.add_runtime_dependency 'faraday', '~> 0.8', '>= 0.8.8'
+  spec.add_runtime_dependency 'thor', '~> 0.18', '>= 0.18.1'
+  spec.add_runtime_dependency 'terminal-table', '~> 1.4', '>= 1.4.5'
 
-  spec.add_development_dependency "bundler", "~> 1.3"
-  spec.add_development_dependency 'rb-fsevent', '~> 0.9.0'
-  spec.add_development_dependency 'guard', '~> 1.8.0'
-  spec.add_development_dependency 'guard-rake', '~> 0.0.0'
-  spec.add_development_dependency 'guard-minitest', '~> 0.5.0'
+  # Development dependencies. See Gemfile for more development deps.
+  spec.add_development_dependency 'bundler', '~> 1.0'
+  spec.add_development_dependency 'rb-fsevent', '~> 0.9', '>= 0.9.0'
+  spec.add_development_dependency 'guard', '~> 1.8', '>= 1.8.0'
+  spec.add_development_dependency 'guard-rake', '~> 0.0', '>= 0.0.0'
+  spec.add_development_dependency 'guard-minitest', '~> 0.5', '>= 0.5.0'
 
   if /darwin|mac os/ === RbConfig::CONFIG['host_os']
-    spec.add_development_dependency 'terminal-notifier-guard', '~> 1.5.3'
+    spec.add_development_dependency 'terminal-notifier-guard', '~> 1.5', '>= 1.5.3'
   else
-    spec.add_development_dependency 'ruby_gntp', '~> 0.3.0'
+    spec.add_development_dependency 'ruby_gntp', '~> 0.3', '>= 0.3.0'
   end
 
-  spec.add_development_dependency 'pry', '~> 0.9.0'
-  spec.add_development_dependency 'yard', '~> 0.8.0'
-  spec.add_development_dependency 'redcarpet', '~> 2.3.0'
+  spec.add_development_dependency 'pry', '~> 0.9', '>= 0.9.0'
+  spec.add_development_dependency 'yard', '~> 0.8', '>= 0.8.0'
+  spec.add_development_dependency 'redcarpet', '~> 2.3', '>= 2.3.0'
 end

@@ -10,10 +10,10 @@ class Aviator::Test
       base_ept  = :public
 
       unless @base
-        request_path = [provider_name, service_name, base_ver, base_ept, base_name]
+        request_path = [provider_name, service_name, :requests, base_ver, base_ept, base_name]
 
         @base = request_path.inject(Aviator) do |namespace, sym|
-          const_name = sym.to_s.camelize
+          const_name = Aviator::StrUtil.camelize(sym.to_s)
 
           if namespace && namespace.const_defined?(const_name, false)
             namespace.const_get(const_name, false)
@@ -32,7 +32,7 @@ class Aviator::Test
 
       inherit = [provider_name.to_sym, service_name.to_sym, base_ver, base_ept, base_name]
 
-      Aviator.define_request request_name, inherit: inherit, &block
+      Aviator.define_request request_name, :inherit => inherit, &block
     end
 
 
@@ -91,7 +91,7 @@ class Aviator::Test
         expected  = "Available requests for #{ provider } #{ service }_service:\n"
 
         requests.each do |klass|
-          expected << "  #{ klass.api_version } #{ klass.endpoint_type } #{ klass.name.split('::').last.underscore }\n"
+          expected << "  #{ klass.api_version } #{ klass.endpoint_type } #{ Aviator::StrUtil.underscore(klass.name.split('::').last) }\n"
         end
 
         klass.describe_service(provider, service).must_equal expected
@@ -113,7 +113,7 @@ class Aviator::Test
 Request: #{ request_name }
 
 Sample Code:
-  session.#{ service }_service.request(:#{ request_name })
+  session.request(:#{ service }_service, :#{ request_name })
 EOF
 
         output = klass.describe_request(
@@ -134,8 +134,8 @@ EOF
         request_name = 'sample_request2'
 
         request_class = build_request(provider, service, request_name) do
-                          param :theParam, required: true
-                          param :another, required: false
+                          param :theParam, :required => true
+                          param :another, :required => false
                         end
 
         expected = <<-EOF
@@ -150,7 +150,7 @@ Parameters:
  +----------+-----------+
 
 Sample Code:
-  session.#{ service }_service.request(:#{ request_name }) do |params|
+  session.request(:#{ service }_service, :#{ request_name }) do |params|
     params.another = value
     params.theParam = value
   end
@@ -174,8 +174,8 @@ EOF
         request_name = 'sample_request3'
 
         request_class = build_request(provider, service, request_name) do
-                          param :theParam, required: true, alias: :the_param
-                          param :anotherParam, required: false, alias: :another_param
+                          param :theParam, :required => true, :alias => :the_param
+                          param :anotherParam, :required => false, :alias => :another_param
                         end
 
         expected = <<-EOF
@@ -190,7 +190,7 @@ Parameters:
  +--------------+-----------+---------------+
 
 Sample Code:
-  session.#{ service }_service.request(:#{ request_name }) do |params|
+  session.request(:#{ service }_service, :#{ request_name }) do |params|
     params.another_param = value
     params.the_param = value
   end
@@ -214,8 +214,8 @@ EOF
         request_name = 'sample_request4'
 
         request_class = build_request(provider, service, request_name) do
-                          param :theParam, required: true, alias: :the_param
-                          param :anotherParam, required: false, alias: :another_param
+                          param :theParam, :required => true, :alias => :the_param
+                          param :anotherParam, :required => false, :alias => :another_param
 
                           link 'link1', 'http://www.link.com'
                         end
@@ -232,7 +232,7 @@ Parameters:
  +--------------+-----------+---------------+
 
 Sample Code:
-  session.#{ service }_service.request(:#{ request_name }) do |params|
+  session.request(:#{ service }_service, :#{ request_name }) do |params|
     params.another_param = value
     params.the_param = value
   end

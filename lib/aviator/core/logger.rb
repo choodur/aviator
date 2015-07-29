@@ -47,8 +47,8 @@ module Aviator
     def dump_body(body)
       return if body.nil?
 
-      # TODO: Make this configurable
-      body.gsub(/(?<=["']password["']:["']).*?(?=["'])/, '[FILTERED_VALUE]')
+      # :TODO => Make this configurable
+      body.gsub(/["']password["']:["']\w*["']/, '"password":[FILTERED_VALUE]')
     end
 
     def dump_headers(headers)

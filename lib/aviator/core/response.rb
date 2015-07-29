@@ -3,7 +3,7 @@ module Aviator
   class Response
     extend Forwardable
 
-    def_delegators :@response, :headers, :status
+    def_delegators :@response, :status
 
     attr_reader :request
 
@@ -14,28 +14,38 @@ module Aviator
 
 
     def body
-      mash(raw_body.length > 0 ? JSON.parse(raw_body) : {} )
+      @body ||= if raw_body.length > 0
+        if Aviator::Compatibility::RUBY_1_8_MODE
+          clean_body = raw_body.gsub(/\\ /, ' ')
+        else
+          clean_body = raw_body
+        end
+
+        Hashish.new(JSON.parse(clean_body))
+      else
+        Hashish.new({})
+      end
     end
+
 
     def headers
-      mash(raw_headers)
+      @headers ||= Hashish.new(@response.headers)
     end
 
+
+    def to_hash
+      Hashish.new({
+        :status  => status,
+        :headers => headers,
+        :body    => body
+      })
+    end
 
     private
 
     def raw_body
-      @response.body
+      @raw_body ||= @response.body
     end
-
-    def mash(*args)
-      Hashie::Mash.new(*args)
-    end
-
-    def raw_headers
-      @response.headers
-    end
-
   end
 
 end

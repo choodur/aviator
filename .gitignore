@@ -20,4 +20,7 @@ tmp/*.*
 test/environment.yml
 test/v3_environment.yml
 vcr.log
-
+.ruby-gemset
+.ruby-version
+*.swp
+*.swo

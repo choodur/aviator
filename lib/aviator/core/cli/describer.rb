@@ -2,6 +2,13 @@ module Aviator
 
   class Describer
 
+    class InvalidProviderNameError < StandardError
+      def initialize(name)
+        super "Provider '#{ name }' does not exist."
+      end
+    end
+
+
     def self.describe_aviator
       str = "Available providers:\n"
 
@@ -25,9 +32,10 @@ module Aviator
 
 
     def self.describe_request(provider_name, service_name, api_version, endpoint_type, request_name)
-      service = Aviator::Service.new provider: provider_name, service: service_name
-      request_class = "Aviator::#{ provider_name.camelize }::#{ service_name.camelize }::"\
-                      "#{ api_version.camelize }::#{ endpoint_type.camelize }::#{ request_name.camelize }".constantize
+      service = Aviator::Service.new :provider => provider_name, :service => service_name
+      request_class = "Aviator::#{ StrUtil.camelize(provider_name) }::#{ StrUtil.camelize(service_name) }::Requests::"\
+                      "#{ StrUtil.camelize(api_version) }::#{ StrUtil.camelize(endpoint_type) }::#{ StrUtil.camelize(request_name) }"
+      request_class = StrUtil.constantize(request_class)
 
       display = "Request: #{ request_name }\n"
 
@@ -57,13 +65,13 @@ module Aviator
         end
 
         widths = [
-          rows.map{|row| row[0].length }.max,
-          rows.map{|row| row[1].length }.max
+          rows.map{|row| row[0].to_s.length }.max,
+          rows.map{|row| row[1].to_s.length }.max
         ]
 
-        widths << rows.map{|row| row[2].length }.max if aliases.length > 0
+        widths << rows.map{|row| row[2].to_s.length }.max if aliases.length > 0
 
-        table = Terminal::Table.new(headings: headings, rows: rows)
+        table = Terminal::Table.new(:headings => headings, :rows => rows)
 
         table.align_column(1, :center)
 
@@ -76,7 +84,7 @@ module Aviator
       # Build the sample code
       display << "\nSample Code:\n"
 
-      display << "  session.#{ service_name }_service.request(:#{ request_name })"
+      display << "  session.request(:#{ service_name }_service, :#{ request_name })"
 
       if params && params.length > 0
         display << " do |params|\n"
@@ -104,13 +112,19 @@ module Aviator
 
 
     def self.describe_service(provider_name, service_name)
-      str = "Available requests for #{ provider_name } #{ service_name }_service:\n"
+      requests = request_classes(provider_name, service_name)
 
-      request_classes(provider_name, service_name).each do |klass|
-        str << "  #{ klass.api_version } #{ klass.endpoint_type } #{ klass.name.split('::').last.underscore }\n"
+      if requests.empty?
+        str = "No requests found for #{ provider_name } #{ service_name }_service."
+      else
+        str = "Available requests for #{ provider_name } #{ service_name }_service:\n"
+
+        requests.each do |klass|
+          str << "  #{ klass.api_version } #{ klass.endpoint_type } #{ StrUtil.underscore(klass.name.split('::').last) }\n"
+        end
+
+        str
       end
-
-      str
     end
 
 
@@ -118,26 +132,28 @@ module Aviator
       private
 
       def provider_names
-        Pathname.new(__FILE__)
-          .join('..', '..', '..')
-          .children
-          .select{|c| c.directory? && c.basename.to_s != 'core' }
+        Pathname.new(__FILE__) \
+          .join('..', '..', '..') \
+          .children \
+          .select{|c| c.directory? && c.basename.to_s != 'core' } \
           .map{|c| c.basename.to_s }
       end
 
 
       def request_classes(provider_name, service_name)
-        service = Aviator::Service.new(provider: provider_name, service: service_name)
+        service = Aviator::Service.new(:provider => provider_name, :service => service_name)
         service.request_classes
       end
 
 
-      def service_names(provider_name)
-        Pathname.new(__FILE__)
-          .join('..', '..', '..', provider_name)
-          .children
-          .select{|c| c.directory? }
-          .map{|c| c.basename.to_s }
+      def service_names(name)
+        provider = Pathname.new(__FILE__).join('..', '..', '..', name)
+
+        raise InvalidProviderNameError.new(name) unless provider.exist?
+
+        provider.children \
+                .select{|c| c.directory? } \
+                .map{|c| c.basename.to_s }
       end
     end
 

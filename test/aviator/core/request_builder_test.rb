@@ -24,17 +24,17 @@ class Aviator::Test
           meta :api_version,   api_ver
           meta :endpoint_type, ep_type
         end
-        
-        [provider, service, api_ver, ep_type, _name_].inject(builder) do |namespace, sym|
-          const_name = sym.to_s.camelize
-          
+
+        [provider, service, :requests, api_ver, ep_type, _name_].inject(builder) do |namespace, sym|
+          const_name = Aviator::StrUtil.camelize(sym.to_s)
+
           namespace.const_defined?(const_name, false).must_equal true
-          
+
           namespace.const_get(const_name, false)
         end
       end
-      
-      
+
+
       it 'does not get confused when a similar name is defined up in the namespace hierarchy' do
         provider = :aws
         service  = :amazing
@@ -49,8 +49,8 @@ class Aviator::Test
           meta :endpoint_type, ep_type
         end
 
-        [provider, service, api_ver, ep_type, _name_].inject(builder) do |namespace, sym|
-          const_name = sym.to_s.camelize
+        [provider, service, :requests, api_ver, ep_type, _name_].inject(builder) do |namespace, sym|
+          const_name = Aviator::StrUtil.camelize(sym.to_s)
 
           namespace.const_defined?(const_name, false).must_equal true,
             "Expected #{ const_name } to be defined in #{ namespace }"
@@ -62,11 +62,11 @@ class Aviator::Test
 
       it 'understands request inheritance' do
         base = {
-          provider: :another_provider,
-          service:  :base_service,
-          api_ver:  :base_api_ver,
-          ep_type:  :base_ep_type,
-          name:     :base_name
+          :provider => :another_provider,
+          :service  => :base_service,
+          :api_ver  => :base_api_ver,
+          :ep_type  => :base_ep_type,
+          :name     => :base_name
         }
 
         builder.define_request base[:name] do
@@ -84,18 +84,19 @@ class Aviator::Test
           base[:name]
         ]
 
-        builder.define_request :child_request, inherit: base_request do; end
+        builder.define_request :child_request, :inherit => base_request do; end
 
         child_req_hierarchy = [
           base[:provider],
           base[:service],
+          :requests,
           base[:api_ver],
           base[:ep_type],
           :child_request
         ]
 
         child_request = child_req_hierarchy.inject(builder) do |namespace, sym|
-          namespace.const_get(sym.to_s.camelize, false)
+          namespace.const_get(Aviator::StrUtil.camelize(sym.to_s), false)
         end
 
         child_request.wont_be_nil
@@ -110,7 +111,7 @@ class Aviator::Test
         non_existent_base = [:none, :existent, :base]
 
         the_method = lambda do
-          builder.define_request :child, inherit: non_existent_base do; end
+          builder.define_request :child, :inherit => non_existent_base do; end
         end
 
         the_method.must_raise Aviator::BaseRequestNotFoundError
@@ -125,11 +126,11 @@ class Aviator::Test
 
       it 'raises a RequestAlreadyDefinedError if the request is already defined' do
         request = {
-          provider: :existing_provider,
-          service:  :base_service,
-          api_ver:  :base_api_ver,
-          ep_type:  :base_ep_type,
-          name:     :base_name
+          :provider => :existing_provider,
+          :service  => :base_service,
+          :api_ver  => :base_api_ver,
+          :ep_type  => :base_ep_type,
+          :name     => :base_name
         }
 
         builder.define_request request[:name] do
@@ -153,7 +154,7 @@ class Aviator::Test
         error = the_method.call rescue $!
 
         error.message.wont_be_nil
-        error.request_name.must_equal request[:name].to_s.camelize
+        error.request_name.must_equal Aviator::StrUtil.camelize(request[:name].to_s)
       end
 
 
@@ -161,14 +162,14 @@ class Aviator::Test
         base_arr  = [:openstack, :identity, :v2, :public, :root]
         child_arr = base_arr.first(base_arr.length - 1) + [:child]
 
-        builder.define_request child_arr.last, inherit: base_arr do; end
+        builder.define_request child_arr.last, :inherit => base_arr do; end
 
-        base_klass = base_arr.inject(builder) do |namespace, sym|
-          namespace.const_get(sym.to_s.camelize, false)
+        base_klass = base_arr.insert(2, :requests).inject(builder) do |namespace, sym|
+          namespace.const_get(Aviator::StrUtil.camelize(sym.to_s), false)
         end
 
-        child_klass = child_arr.inject(builder) do |namespace, sym|
-          namespace.const_get(sym.to_s.camelize, false)
+        child_klass = child_arr.insert(2, :requests).inject(builder) do |namespace, sym|
+          namespace.const_get(Aviator::StrUtil.camelize(sym.to_s), false)
         end
 
         base_klass.wont_be_nil
@@ -176,7 +177,7 @@ class Aviator::Test
       end
 
     end
-    
+
   end
-  
+
 end
