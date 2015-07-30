@@ -1,21 +1,29 @@
+#require 'test_helper'
 require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/requests/v2/admin/get_user' do
+  describe 'aviator/openstack/identity/v2/admin/get_user' do
 
-    def get_name
-      Environment.openstack_member[:auth_credentials][:username]
-    end
 
-    def create_request(session_data = get_session_data, &block)
-      block ||= lambda { |p| p[:name] = get_name }
-      klass.new(session_data, &block)
+
+    def create_request(session_data = get_session_data)
+      klass.new(session_data) do |p|
+        p[:id] = get_user_id
+      end
     end
 
 
     def get_session_data
       session.send :auth_response
+    end
+
+    def get_user_id
+      get_session_data['user']['id']
+    end
+
+    def get_user_name
+      get_session_data['user']['username']
     end
 
 
@@ -32,8 +40,8 @@ class Aviator::Test
     def session
       unless @session
         @session = Aviator::Session.new(
-          :config_file => Environment.path,
-          :environment => 'openstack_admin'
+          config_file: Environment.path,
+          environment: 'openstack_admin'
         )
         @session.authenticate
       end
@@ -66,7 +74,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
+      headers = { 'X-Auth-Token' => session_data.token }
 
       request = create_request(session_data)
 
@@ -79,34 +87,47 @@ class Aviator::Test
     end
 
 
-    validate_attr :required_params do
-      klass.required_params.must_equal [:name]
-    end
-
-
     validate_attr :url do
-      service_spec = get_session_data[:body][:access][:serviceCatalog].find{|s| s[:type] == 'identity' }
-      url          = "#{ service_spec[:endpoints][0][:adminURL] }/users?name=#{get_name}"
-
-      request = create_request do |params|
-        params[:name] = get_name
+      session_data = get_session_data
+      service_spec = session_data[:catalog].find{|s| s[:type] == 'identity' }
+      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/users/#{get_user_id}"
+      request      = klass.new(session_data) do |p|
+        p.id = get_user_id
       end
 
       request.url.must_equal url
     end
 
 
-    validate_response 'name is provided' do
+    validate_response 'id parameter is provided' do
       service = session.identity_service
 
-      response = service.request :get_user do |params|
-        params[:name] = get_name
+      response = service.request :get_user do |p|
+        p.id = get_user_id
       end
+
 
       response.status.must_equal 200
       response.body.wont_be_nil
-      response.body[:user].wont_be_nil
-      response.body[:user][:name].must_equal get_name
+      response.body[:user].length.wont_equal 0
+      #since we can't send an email to somebody
+      email_regex = %r{
+         ^ # Start of string
+
+         [0-9a-z] # First character
+         [0-9a-z.+]+ # Middle characters
+         [0-9a-z] # Last character
+
+         @ # Separating @ character
+
+         [0-9a-z] # Domain name begin
+         [0-9a-z.-]+ # Domain name middle
+         [0-9a-z] # Domain name end
+
+         $ # End of string
+      }xi # Case insensitive
+      response.body[:user]['name'].must_equal get_user_name
+      (response.body[:user]['email'] =~ email_regex).must_equal 0
       response.headers.wont_be_nil
     end
 

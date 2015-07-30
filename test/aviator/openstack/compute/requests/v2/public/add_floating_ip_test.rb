@@ -2,14 +2,13 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/requests/v2/public/add_floating_ip' do
+  describe 'aviator/openstack/compute/v2/public/add_floating_ip' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
-                  params[:server_id] = 0
-                  params[:address] = "1.1.1.1"
+                  params[:server_id] = 'randompassword'
+                  params[:address]   = '0.0.0.0'
                 end
-
       klass.new(session_data, &block)
     end
 
@@ -32,8 +31,8 @@ class Aviator::Test
     def session
       unless @session
         @session = Aviator::Session.new(
-                     :config_file => Environment.path,
-                     :environment => 'openstack_member'
+                     config_file: Environment.path,
+                     environment: 'openstack_member'
                    )
         @session.authenticate
       end
@@ -67,7 +66,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
+      headers = { 'X-Auth-Token' => get_session_data.token }
 
       request = create_request
 
@@ -91,24 +90,77 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:body][:access][:serviceCatalog].find{|s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints][0][:publicURL] }/servers/0/action"
+      session_data = get_session_data
+      service_spec = session_data[:catalog].find{|s| s[:type] == 'compute' }
+      server_id    = 'testdummyID'
+      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/servers/#{ server_id }/action"
 
-      request = create_request
+      request = create_request do |params|
+        params[:server_id]  = server_id
+        params[:address]    = '0.0.0.1'
+      end
 
       request.url.must_equal url
     end
 
 
-    validate_response 'valid params are provided' do
-      response = session.compute_service.request :add_floating_ip, :api_version => :v2 do |params|
-        params[:server_id] = "d30ae033-e714-41bc-8130-1b89352f50ee"
-        params[:address] = "192.168.42.129"
+    validate_response 'valid parameters are provided' do
+      session.compute_service.request :create_floating_ip
+
+      server_list_response  = session.compute_service.request :list_servers
+      ip_list_response      = session.compute_service.request :list_floating_ips
+
+      server_id  = server_list_response.body[:servers][-1][:id]
+      ip_address = ip_list_response.body[:floating_ips][-1][:ip]
+
+      response = session.compute_service.request :add_floating_ip do |params|
+        params[:server_id]  = server_id
+        params[:address]    = ip_address
       end
+
+      server_get_response = session.compute_service.request :get_server do |p|
+        p[:id] = server_id
+      end
+
+      get_body = server_get_response.body
 
       response.status.must_equal 202
       response.headers.wont_be_nil
+
+      server_get_response.status.must_equal 200
+      get_body.wont_be_nil
+      get_body[:server][:addresses][:private]
+          .map{|a| a[:addr] == ip_address && a["OS-EXT-IPS:type"] == "floating"}.must_include true
     end
+
+
+    validate_response 'non existent server is provided' do
+      response = session.compute_service.request :add_floating_ip do |params|
+        params[:server_id]  = 'server1doesntexist'
+        params[:address]    = '0.0.0.1'
+      end
+
+      response.status.must_equal 404
+      response.headers.wont_be_nil
+      response.body["itemNotFound"].wont_be_nil
+      response.body["itemNotFound"]["message"].must_equal "The resource could not be found."
+    end
+
+
+    validate_response 'non existent IP address is provided' do
+      list_response = session.compute_service.request :list_servers
+
+      response = session.compute_service.request :add_floating_ip do |params|
+        params[:server_id]  = list_response.body[:servers].first[:id]
+        params[:address]    = '0.0.0.1.95.9'
+      end
+
+      response.status.must_equal 404
+      response.headers.wont_be_nil
+      response.body["itemNotFound"].wont_be_nil
+      response.body["itemNotFound"]["message"].must_equal "floating ip not found"
+    end
+
 
   end
 

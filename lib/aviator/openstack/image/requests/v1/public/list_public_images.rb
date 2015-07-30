@@ -26,8 +26,7 @@ module Aviator
     end
 
     def url
-      uri = URI(base_url)
-      url = "#{ uri.scheme }://#{ uri.host }:#{ uri.port.to_s }/v1/images"
+      url = "#{ base_url }/images"
       url << "/detail" if params[:details]
 
       filters = []

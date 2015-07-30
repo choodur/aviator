@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/requests/v2/public/list_floating_ips' do
+  describe 'aviator/openstack/compute/v2/public/list_floating_ips' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)
@@ -27,8 +27,8 @@ class Aviator::Test
     def session
       unless @session
         @session = Aviator::Session.new(
-          :config_file => Environment.path,
-          :environment => 'openstack_member'
+          config_file: Environment.path,
+          environment: 'openstack_member'
         )
         @session.authenticate
       end
@@ -61,7 +61,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
+      headers = { 'X-Auth-Token' => session_data.token }
 
       request = create_request(session_data)
 
@@ -76,8 +76,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:body][:access][:serviceCatalog].find{|s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints][0][:publicURL] }/os-floating-ips"
+      service_spec = session_data[:catalog].find{|s| s[:type] == 'compute' }
+      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/os-floating-ips"
       request      = klass.new(session_data)
 
       request.url.must_equal url
@@ -85,14 +85,11 @@ class Aviator::Test
 
 
     validate_response 'no parameters are provided' do
-      service = session.compute_service
-
-      response = service.request :list_floating_ips, :api_version => :v2
+      response = session.compute_service.request :list_floating_ips
 
       response.status.must_equal 200
       response.body.wont_be_nil
-      response.body[:floating_ips].wont_be_nil
-      response.body[:floating_ips].must_be_kind_of Array
+      response.body[:floating_ips].length.must_equal 0
       response.headers.wont_be_nil
     end
 

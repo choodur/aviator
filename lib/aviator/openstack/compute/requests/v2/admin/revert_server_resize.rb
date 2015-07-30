@@ -37,8 +37,7 @@ module Aviator
 
 
     def url
-      service_spec = session_data[:body][:access][:serviceCatalog].find{ |s| s[:type] == service.to_s }
-      "#{ service_spec[:endpoints][0][:adminURL] }/servers/#{ params[:id] }/action"
+      "#{ base_url }/servers/#{ params[:id] }/action"
     end
 
   end

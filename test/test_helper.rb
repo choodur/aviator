@@ -1,11 +1,10 @@
 # Add the gem's lib folder to the load path
 $:.unshift File.expand_path('../../lib', __FILE__)
-require 'pathname'
+
 
 # Set-up coverage reporting (local and Coveralls.com)
 require 'simplecov'
 require 'coveralls'
-
 SimpleCov.command_name 'MiniTest'
 SimpleCov.formatter = if ENV['TRAVIS']
                         SimpleCov::Formatter::MultiFormatter[
@@ -19,6 +18,7 @@ SimpleCov.formatter = if ENV['TRAVIS']
 SimpleCov.start do
   add_filter '/test/'
   add_filter '/.bundled_gems/'
+
   add_group 'Core', 'lib/aviator/core'
   add_group 'OpenStack', 'lib/aviator/openstack'
 end

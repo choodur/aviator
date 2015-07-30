@@ -25,8 +25,7 @@ module Aviator
 
 
     def url
-      p = params
-      "#{ base_url }/tenants/#{ p[:tenant_id] }/users/#{ p[:user_id] }/roles/OS-KSADM/#{ p[:role_id] }"
+      "#{ base_url }/tenants/#{ params[:tenant_id] }/users/#{ params[:user_id] }/roles/OS-KSADM/#{ params[:role_id] }"
     end
 
   end
