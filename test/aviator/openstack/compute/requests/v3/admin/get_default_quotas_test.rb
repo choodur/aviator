@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v3/admin/get_default_quotas' do
+  describe 'aviator/openstack/compute/requests/v3/admin/get_default_quotas' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -31,7 +31,7 @@ class Aviator::Test
     def tenant_id
       return @tenant_id unless @tenant_id.nil?
 
-      response   = session.identity_service.request(:list_tenants)
+      response   = session.identity_service.request(:list_tenants, :api_version => :v2)
       @tenant_id = response.body[:tenants].last[:id]
     end
 
@@ -73,7 +73,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       create_request(session_data).headers.must_equal headers
     end
@@ -90,7 +90,7 @@ class Aviator::Test
 
 
     validate_attr :url do
-      v3_base_url = get_session_data[:catalog].find { |s| s[:type] == 'computev3' }[:endpoints].find{|e| e[:interface] == 'admin'}[:url]
+      v3_base_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'computev3' }[:endpoints][0]['adminURL']
       url         = "#{ v3_base_url }/os-quota-sets/#{ tenant_id }/defaults"
       tenant      = tenant_id
 
@@ -105,7 +105,7 @@ class Aviator::Test
     validate_response 'a valid param is provided' do
       tenant = tenant_id
 
-      response = session.compute_service.request(:get_default_quotas, api_version: :v3) do |params|
+      response = session.compute_service.request(:get_default_quotas, :api_version => :v3) do |params|
         params[:tenant_id] = tenant
       end
 
@@ -117,7 +117,7 @@ class Aviator::Test
 
 
     validate_response 'non existent tenant is provided' do
-      response = session.compute_service.request(:get_default_quotas, api_version: :v3) do |params|
+      response = session.compute_service.request(:get_default_quotas, :api_version => :v3) do |params|
         params[:tenant_id] = 'nonExistenTenant'
       end
 

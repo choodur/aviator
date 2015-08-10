@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/create_flavor' do
+  describe 'aviator/openstack/compute/requests/v2/admin/create_flavor' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -46,6 +46,13 @@ class Aviator::Test
     end
 
 
+    def delete_flavor(id)
+      session.compute_service.request :delete_flavor, :api_version => :v2 do |params|
+        params[:flavor_id] = id
+      end
+    end
+
+
     validate_attr :anonymous? do
       klass.anonymous?.must_equal false
     end
@@ -62,7 +69,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -76,8 +83,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = helper.admin_session_data
-      service_spec = get_session_data[:catalog].find{ |s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/flavors"
+      compute_url  = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['adminURL']
+      url          = "#{ compute_url }/flavors"
 
       request = create_request
       request.url.must_equal url
@@ -85,10 +92,10 @@ class Aviator::Test
 
 
     validate_response 'valid parameters are provided' do
-      tenant    = session.identity_service.request(:list_tenants).body[:tenants].first
+      tenant    = session.identity_service.request(:list_tenants, :api_version => :v2).body[:tenants].first
       tenant_id = tenant[:id]
 
-      response = session.compute_service.request :create_flavor do |params|
+      response = session.compute_service.request :create_flavor, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
         params[:disk] = '1'
         params[:ram] = '526'
@@ -101,11 +108,13 @@ class Aviator::Test
       response.body.wont_be_nil
       response.body[:flavor].wont_be_nil
       response.headers.wont_be_nil
+
+      delete_flavor(response.body[:flavor][:id])
     end
 
     validate_response 'valid parameters are provided except for tenant_id' do
 
-      response = session.compute_service.request :create_flavor do |params|
+      response = session.compute_service.request :create_flavor, :api_version => :v2 do |params|
         params[:tenant_id] = ''
         params[:disk] = '1'
         params[:ram] = '526'
@@ -117,11 +126,13 @@ class Aviator::Test
       response.body.wont_be_nil
       response.body[:flavor].wont_be_nil
       response.headers.wont_be_nil
+
+      delete_flavor(response.body[:flavor][:id])
     end
 
 
     validate_response 'invalid parameters are provided' do
-      response = session.compute_service.request :create_flavor do |params|
+      response = session.compute_service.request :create_flavor, :api_version => :v2 do |params|
         params[:id] = 'auto'
         params[:tenant_id] = '123123213'
         params[:disk] = '1'

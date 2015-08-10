@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/v3/public/grant_role_to_user_on_domain' do
+  describe 'aviator/openstack/identity/requests/v3/public/grant_role_to_user_on_domain' do
 
     def session
       unless @session
@@ -28,10 +28,10 @@ class Aviator::Test
 
     def setup_dependencies
       @keystone ||= session.identity_service
-      @domain   ||= @keystone.request(:list_domains, version: :v3).body[:domains].first
-      @role     ||= @keystone.request(:list_roles, version: :v2).body[:roles].first
+      @domain   ||= @keystone.request(:list_domains, :api_version => :v3).body[:domains].first
+      @role     ||= @keystone.request(:list_roles, :api_version => :v2).body[:roles].first
 
-      @user = @keystone.request(:create_user, version: :v2) do |p|
+      @user = @keystone.request(:create_user, :api_version => :v2) do |p|
         p.name      = 'roled_user'
         p.password  = '123qwe'
       end.body[:user]
@@ -39,7 +39,7 @@ class Aviator::Test
 
 
     def teardown_dependencies
-      @keystone.request(:delete_user){|p| p.id = @user.id}
+      @keystone.request :delete_user, :api_version => :v2, :params => { :id => @user[:id] }
     end
 
 
@@ -51,10 +51,10 @@ class Aviator::Test
     validate_response 'parameters are valid' do
       setup_dependencies
 
-      response = @keystone.request(:grant_role_to_user_on_domain, version: :v3) do |params|
-        params[:domain_id]  = @domain.id
-        params[:role_id]    = @role.id
-        params[:user_id]    = @user.id
+      response = @keystone.request(:grant_role_to_user_on_domain, :api_version => :v3) do |params|
+        params[:domain_id]  = @domain[:id]
+        params[:role_id]    = @role[:id]
+        params[:user_id]    = @user[:id]
       end
 
       response.status.must_equal 204
@@ -67,10 +67,10 @@ class Aviator::Test
     validate_response 'domain id is invalid' do
       setup_dependencies
 
-      response = @keystone.request(:grant_role_to_user_on_domain, version: :v3) do |params|
+      response = @keystone.request(:grant_role_to_user_on_domain, :api_version => :v3) do |params|
         params[:domain_id]  = 'nonexistent'
-        params[:role_id]    = @role.id
-        params[:user_id]    = @user.id
+        params[:role_id]    = @role[:id]
+        params[:user_id]    = @user[:id]
       end
 
       response.status.must_equal 404
@@ -83,10 +83,10 @@ class Aviator::Test
     validate_response 'role id is invalid' do
       setup_dependencies
 
-      response = @keystone.request(:grant_role_to_user_on_domain, version: :v3) do |params|
-        params[:domain_id]  = @domain.id
+      response = @keystone.request(:grant_role_to_user_on_domain, :api_version => :v3) do |params|
+        params[:domain_id]  = @domain[:id]
         params[:role_id]    = 'nonexistent'
-        params[:user_id]    = @user.id
+        params[:user_id]    = @user[:id]
       end
 
       response.status.must_equal 404
@@ -99,9 +99,9 @@ class Aviator::Test
     validate_response 'user id is invalid' do
       setup_dependencies
 
-      response = @keystone.request(:grant_role_to_user_on_domain, version: :v3) do |params|
-        params[:domain_id]  = @domain.id
-        params[:role_id]    = @role.id
+      response = @keystone.request(:grant_role_to_user_on_domain, :api_version => :v3) do |params|
+        params[:domain_id]  = @domain[:id]
+        params[:role_id]    = @role[:id]
         params[:user_id]    = 'nonexistent'
       end
 

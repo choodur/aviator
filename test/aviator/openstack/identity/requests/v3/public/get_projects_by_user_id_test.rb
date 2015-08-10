@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/v3/public/get_projects_by_user_id' do
+  describe 'aviator/openstack/identity/requests/v3/public/get_projects_by_user_id' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -18,7 +18,7 @@ class Aviator::Test
     end
 
     def get_session_id
-      get_session_data[:user][:id]
+      get_session_data[:body][:access][:user][:id]
     end
 
 
@@ -68,10 +68,8 @@ class Aviator::Test
 
     validate_attr :headers do
       session_data = get_session_data
-
-      headers = { 'X-Auth-Token' => session_data.token }
-
-      request = create_request(session_data)
+      headers      = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
+      request      = create_request(session_data)
 
       request.headers.must_equal headers
     end
@@ -84,8 +82,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'identity' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/users/#{get_session_id}/projects"
+      identity_url = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'identityv3' }[:endpoints][0]['publicURL']
+      url          = "#{ identity_url }/users/#{get_session_id}/projects"
       request      = create_request(session_data)
 
       request.url.must_equal url
@@ -105,8 +103,8 @@ class Aviator::Test
         creds.username = Environment.openstack_admin[:auth_credentials][:username]
         creds.password = Environment.openstack_admin[:auth_credentials][:password]
       end
-      auth_info = session.send :auth_response
-      id = auth_info[:user][:id]
+
+      id = get_session_id
       base_url = URI(Environment.openstack_admin[:auth_service][:host_uri])
       base_url.path = "/v3"
 

@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/bulk_create_floating_ips' do
+  describe 'aviator/openstack/compute/requests/v2/admin/bulk_create_floating_ips' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |p|
@@ -66,7 +66,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -80,17 +80,16 @@ class Aviator::Test
 
 
     validate_attr :url do
-      session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|a| a[:interface] == 'admin'}[:url] }/os-floating-ips-bulk"
-      request      = create_request
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['adminURL']
+      url         = "#{ compute_url }/os-floating-ips-bulk"
+      request     = create_request
 
       request.url.must_equal url
     end
 
 
     validate_response 'valid parameters are provided' do
-      response = session.compute_service.request :bulk_create_floating_ips do |params|
+      response = session.compute_service.request :bulk_create_floating_ips, :api_version => :v2 do |params|
         params[:pool] = 'test'
         params[:ip_range] = '192.168.7.56/29'
       end
@@ -102,7 +101,7 @@ class Aviator::Test
     end
 
     validate_response 'invalid parameters are provided' do
-      response = session.compute_service.request :bulk_create_floating_ips do |params|
+      response = session.compute_service.request :bulk_create_floating_ips, :api_version => :v2 do |params|
         params[:pool] = 'invalid-pool!'
         params[:ip_range]  = 'this-is-invalid!'
       end

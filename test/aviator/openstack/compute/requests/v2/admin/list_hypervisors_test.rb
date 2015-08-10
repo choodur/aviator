@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/requests/v2/admin/list_hypervisors' do
+  describe 'aviator/openstack/compute/requests/requests/v2/admin/list_hypervisors' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)

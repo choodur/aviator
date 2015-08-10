@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/public/list_security_groups_by_server' do
+  describe 'aviator/openstack/compute/requests/v2/public/list_security_groups_by_server' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda { |params| params[:server_id] = 0 }
@@ -53,7 +53,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -73,9 +73,9 @@ class Aviator::Test
     end
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{ |s| s[:type] == 'compute' }
-      server_id = "serverID"
-      url = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/servers/#{ server_id }/os-security-groups"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      server_id   = "serverID"
+      url         = "#{ compute_url }/servers/#{ server_id }/os-security-groups"
 
       request = create_request do |params|
         params[:server_id] = server_id

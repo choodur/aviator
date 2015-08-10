@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/update_network' do
+  describe 'aviator/openstack/compute/requests/v2/admin/update_network' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -65,7 +65,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       create_request(session_data).headers.must_equal headers
     end
@@ -82,10 +82,9 @@ class Aviator::Test
 
 
     validate_attr :url do
-      network_id = 'networkId'
-
-      service_spec = get_session_data[:catalog].find{ |s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/os-networks/#{network_id}/action"
+      network_id  = 'networkId'
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['adminURL']
+      url         = "#{ compute_url }/os-networks/#{network_id}/action"
 
 
       request = klass.new(get_session_data) do |p|

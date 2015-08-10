@@ -12,6 +12,5 @@ require "aviator/core/request_builder"
 require "aviator/core/response"
 require "aviator/core/service"
 require "aviator/core/session"
-require "aviator/core/session_data"
 require "aviator/core/logger"
 

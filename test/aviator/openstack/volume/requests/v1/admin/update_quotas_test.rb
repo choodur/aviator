@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v1/admin/update_quotas' do
+  describe 'aviator/openstack/volume/requests/v1/admin/update_quotas' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -31,7 +31,7 @@ class Aviator::Test
     def tenant_id
       return @tenant_id unless @tenant_id.nil?
 
-      response   = session.identity_service.request(:list_tenants)
+      response   = session.identity_service.request(:list_tenants, :api_version => :v2)
       @tenant_id = response.body[:tenants].last[:id]
     end
 
@@ -76,7 +76,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       create_request(session_data).headers.must_equal headers
     end
@@ -99,8 +99,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:catalog].find { |s| s[:type] == 'volume' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/os-quota-sets/#{ tenant_id }"
+      volume_url   = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'volume' }[:endpoints][0]['adminURL']
+      url          = "#{ volume_url }/os-quota-sets/#{ tenant_id }"
 
       request = klass.new(session_data) do |p|
         p[:tenant_id] = tenant_id
@@ -143,6 +143,12 @@ class Aviator::Test
         response.body[:quota_set].wont_be_nil
         response.body[:quota_set][param].must_equal 0
         response.headers.wont_be_nil
+
+        # restore quota
+        response = session.volume_service.request :update_quotas, :api_version => :v1 do |params|
+          params[:tenant_id]  = tenant_id
+          params[param]       = 10
+        end
       end
     end
 

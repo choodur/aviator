@@ -50,7 +50,7 @@ class Aviator::Test
     end
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -70,7 +70,7 @@ class Aviator::Test
     end
 
     validate_response 'valid parameters are provided' do
-      response = session.volume_service.request(:create_volume_type, api_version: :v2) do |params|
+      response = session.volume_service.request(:create_volume_type, :api_version => :v2) do |params|
         params[:name]        = 'SATA'
         params[:extra_specs] = { capabilities: 'gpu' }
       end
@@ -80,7 +80,7 @@ class Aviator::Test
       response.body[:volume_type].wont_be_nil
       response.headers.wont_be_nil
 
-      session.volume_service.request(:delete_volume_type, api_version: :v2) do |params|
+      session.volume_service.request(:delete_volume_type, :api_version => :v2) do |params|
         params[:id] = response.body[:volume_type][:id]
       end
     end

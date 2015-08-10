@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v2/public/upload_to_image' do
+  describe 'aviator/openstack/volume/requests/v2/public/upload_to_image' do
 
     def get_session_data
       session.send :auth_response
@@ -39,7 +39,7 @@ class Aviator::Test
 
     validate_response 'parameters are provided' do
 
-      create_volume = session.volume_service.request(:create_volume) do |p|
+      create_volume = session.volume_service.request(:create_volume, :api_version => :v1) do |p|
         p.display_name        = 'upload-to-image-test'
         p.display_description = 'upload-to-image-test'
         p.size                = 1
@@ -51,7 +51,7 @@ class Aviator::Test
       # wait, else "Invalid volume: Volume status must be available/in-use."
       sleep 10 if VCR.current_cassette.recording?
 
-      response = session.volume_service.request(:upload_to_image, api_version: :v2) do |p|
+      response = session.volume_service.request(:upload_to_image, :api_version => :v2) do |p|
         p.volume_id  = volume_id
         p.image_name = image_name
         p.force      = 'True'
@@ -64,8 +64,8 @@ class Aviator::Test
       os_image['image_name'].must_equal image_name
 
       sleep 10 if VCR.current_cassette.recording?
-      session.compute_service.request(:delete_image) { |p| p.id = os_image['image_id'] }
-      session.volume_service.request(:delete_volume) { |p| p.id = volume_id }
+      session.compute_service.request(:delete_image, :api_version => :v2) { |p| p.id = os_image['image_id'] }
+      session.volume_service.request(:delete_volume, :api_version => :v1) { |p| p.id = volume_id }
     end
 
   end

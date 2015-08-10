@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/list_floating_ips_by_host' do
+  describe 'aviator/openstack/compute/requests/v2/admin/list_floating_ips_by_host' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)
@@ -61,7 +61,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -76,8 +76,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|a| a[:interface] == 'admin'}[:url] }/os-floating-ips-bulk"
+      compute_url  = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['adminURL']
+      url          = "#{ compute_url }/os-floating-ips-bulk"
       request      = klass.new(session_data)
 
       request.url.must_equal url
@@ -85,7 +85,7 @@ class Aviator::Test
 
 
     validate_response 'no parameters are provided' do
-      response = session.compute_service.request :list_floating_ips_by_host
+      response = session.compute_service.request :list_floating_ips_by_host, :api_version => :v2
 
       response.status.must_equal 200
       response.body.wont_be_nil

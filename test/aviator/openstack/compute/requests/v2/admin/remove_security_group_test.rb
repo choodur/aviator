@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/remove_security_group' do
+  describe 'aviator/openstack/compute/requests/v2/admin/remove_security_group' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -20,7 +20,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -76,7 +76,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -100,9 +100,9 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{ |s| s[:type] == 'compute' }
-      server_id    = 'sampleId'
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/servers/#{ server_id }/action"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['adminURL']
+      server_id   = 'sampleId'
+      url         = "#{ compute_url }/servers/#{ server_id }/action"
 
       request = create_request do |params|
         params[:id]   = server_id
@@ -115,37 +115,40 @@ class Aviator::Test
 
     validate_response 'valid params are provided' do
       service   = session.compute_service
-      server_id = service.request(:list_servers).body[:servers].first[:id]
+      server_id = helper.create_server(session).body[:server][:id]
 
-      sec_group_response = service.request :create_security_group do |params|
+      sec_group_response = service.request :create_security_group, :api_version => :v2 do |params|
         params[:name]         = 'web security'
         params[:description]  = 'web related rules'
       end
 
-      sec_name = sec_group_response.body[:security_group][:name]
+      sec_group = sec_group_response.body[:security_group]
 
-      add_response = service.request :add_security_group do |params|
+      add_response = service.request :add_security_group, :api_version => :v2 do |params|
         params[:id]   = server_id
-        params[:name] = sec_name
+        params[:name] = sec_group[:name]
       end
 
-      response = service.request :remove_security_group do |params|
+      response = service.request :remove_security_group, :api_version => :v2 do |params|
         params[:id]   = server_id
-        params[:name] = sec_name
+        params[:name] = sec_group[:name]
       end
 
       response.status.must_equal 202
       response.headers.wont_be_nil
       response.body.must_be_empty
+
+      helper.delete_server(session, server_id)
+      service.request :delete_security_group, :api_version => :v2, :params => { :id => sec_group[:id] }
     end
 
 
     validate_response 'non existent server is provided' do
       service   = session.compute_service
       server_id = 'bogus-doesnt-exist'
-      sec_group = service.request(:list_security_groups).body[:security_groups].last
+      sec_group = service.request(:list_security_groups, :api_version => :v2).body[:security_groups].last
 
-      response = service.request :remove_security_group do |params|
+      response = service.request :remove_security_group, :api_version => :v2 do |params|
         params[:id]   = server_id
         params[:name] = sec_group[:name]
       end
@@ -159,11 +162,11 @@ class Aviator::Test
 
     validate_response 'non existent security group is provided' do
       service        = session.compute_service
-      server_id      = service.request(:list_servers).body[:servers].first[:id]
+      server_id      = helper.create_server(session).body[:server][:id]
       sec_group_name = 'bogus-doesnt-exist'
-      project_id     = session.send(:auth_response).project[:id]
+      project_id     = session.send(:auth_response)[:body][:access][:token][:tenant][:id]
 
-      response = service.request :remove_security_group do |params|
+      response = service.request :remove_security_group, :api_version => :v2 do |params|
         params[:id]   = server_id
         params[:name] = sec_group_name
       end
@@ -172,6 +175,8 @@ class Aviator::Test
       response.headers.wont_be_nil
       response.body["itemNotFound"].wont_be_empty
       response.body["itemNotFound"]["message"].must_equal "Security group #{ sec_group_name } not found for project #{ project_id }."
+
+      helper.delete_server(session, server_id)
     end
 
   end

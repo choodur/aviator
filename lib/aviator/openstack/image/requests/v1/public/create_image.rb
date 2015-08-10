@@ -25,7 +25,7 @@ module Aviator
 
     def headers
       h = {
-        'X-Auth-Token'                  => session_data.token,
+        'X-Auth-Token'                  => session_data[:body][:access][:token][:id],
         'Content-Type'                  =>'application/octet-stream',
         'x-image-meta-id'               => params[:id],
         'x-image-meta-name'             => params[:name],
@@ -66,7 +66,7 @@ module Aviator
     end
 
     def url
-      "#{ base_url }/images"
+      "#{ base_url }/v1/images"
     end
 
     undef_method :body unless @request_body

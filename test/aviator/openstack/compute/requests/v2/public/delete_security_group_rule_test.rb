@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/public/delete_security_group_rule' do
+  describe 'aviator/openstack/compute/requests/v2/public/delete_security_group_rule' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)
@@ -61,7 +61,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request {|p| p[:id] = 0 }
 
@@ -85,9 +85,9 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{|s| s[:type] == 'compute' }
-      rule_id      = 0
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/os-security-group-rules/#{ rule_id }"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      rule_id     = 0
+      url         = "#{ compute_url }/os-security-group-rules/#{ rule_id }"
 
       request = create_request do |params|
         params[:id] = rule_id

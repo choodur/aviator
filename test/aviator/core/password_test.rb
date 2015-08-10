@@ -1,4 +1,4 @@
-require_relative('../../test_helper')
+require 'test_helper'
 
 class Aviator::Test
 
@@ -69,15 +69,15 @@ class Aviator::Test
           c[:password] = 'm@!@#$%^&*'
         end
 
-        filtered = false
+        filtered   = false
         unfiltered = false
 
         if File.readlines(log_file_path).grep(/m@\!@#\$%\^\&\*/).size > 0
-          unfiltered=true
+          unfiltered = true
         end
 
         if File.readlines(log_file_path).grep(/FILTERED_VALUE/).size > 0
-          filtered=true
+          filtered = true
         end
 
         #special characters password must not be in aviator.log

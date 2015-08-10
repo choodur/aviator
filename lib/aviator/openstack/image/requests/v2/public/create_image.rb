@@ -27,8 +27,10 @@ module Aviator
         p[key] = params[key] if params[key]
       end
 
-      params[:properties].each do |key, value|
-        p[key] = value unless value.nil?
+      unless params[:properties].nil?
+        params[:properties].each do |key, value|
+          p[key] = value unless value.nil?
+        end
       end
 
       p
@@ -43,8 +45,7 @@ module Aviator
     end
 
     def url
-      uri = URI(base_url)
-      "#{ uri.scheme }://#{ uri.host }:#{ uri.port.to_s }/v2/images"
+      "#{ base_url }/v2/images"
     end
 
   end

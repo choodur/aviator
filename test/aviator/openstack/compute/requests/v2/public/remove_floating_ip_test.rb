@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/public/remove_floating_ip' do
+  describe 'aviator/openstack/compute/requests/v2/public/remove_floating_ip' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -66,7 +66,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -91,9 +91,9 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'compute' }
-      server_id    = 'testdummyID'
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/servers/#{ server_id }/action"
+      compute_url  = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      server_id    = 'dummyID'
+      url          = "#{ compute_url }/servers/#{ server_id }/action"
 
       request = create_request do |params|
         params[:server_id]  = server_id

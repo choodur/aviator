@@ -22,7 +22,7 @@ module Aviator
 
     def headers
       h = {
-        'X-Auth-Token'                  => session_data.token,
+        'X-Auth-Token'                  => session_data[:body][:access][:token][:id],
         'x-image-meta-name'             => params[:name],
         'x-image-meta-disk-format'      => params[:disk_format],
         'x-image-meta-container-format' => params[:container_format],
@@ -47,7 +47,7 @@ module Aviator
     end
 
     def url
-      "#{ bse_url }/images/#{ params[:id] }"
+      "#{ base_url }/v1/images/#{ params[:id] }"
     end
 
   end

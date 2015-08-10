@@ -3,7 +3,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/v2/admin/get_user' do
+  describe 'aviator/openstack/identity/requests/v2/admin/get_user' do
 
 
 
@@ -19,11 +19,11 @@ class Aviator::Test
     end
 
     def get_user_id
-      get_session_data['user']['id']
+      get_session_data['body']['access']['user']['id']
     end
 
     def get_user_name
-      get_session_data['user']['username']
+      get_session_data['body']['access']['user']['username']
     end
 
 
@@ -74,7 +74,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -89,8 +89,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'identity' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/users/#{get_user_id}"
+      identity_url = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'identity' }[:endpoints][0]['adminURL']
+      url          = "#{ identity_url }/users/#{get_user_id}"
       request      = klass.new(session_data) do |p|
         p.id = get_user_id
       end
@@ -102,10 +102,9 @@ class Aviator::Test
     validate_response 'id parameter is provided' do
       service = session.identity_service
 
-      response = service.request :get_user do |p|
+      response = service.request :get_user, :api_version => :v2 do |p|
         p.id = get_user_id
       end
-
 
       response.status.must_equal 200
       response.body.wont_be_nil

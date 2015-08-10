@@ -1,11 +1,8 @@
 module Aviator
 
-  define_request :create_user do
+  define_request :create_user, :inherit => [:openstack, :common, :v2, :admin, :base] do
 
-    meta :provider,      :openstack
-    meta :service,       :identity
-    meta :api_version,   :v2
-    meta :endpoint_type, :admin
+    meta :service, :identity
 
 
     link 'documentation',

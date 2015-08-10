@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/list_flavor_tenants' do
+  describe 'aviator/openstack/compute/requests/v2/admin/list_flavor_tenants' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -42,14 +42,30 @@ class Aviator::Test
 
 
     def create_flavor
-      response = session.compute_service.request :create_flavor do |params|
-        params[:disk] = '1'
-        params[:ram] = '1'
+      response = session.compute_service.request :create_flavor, :api_version => :v2 do |params|
+        params[:disk]  = '1'
+        params[:ram]   = '1'
         params[:vcpus] = '1'
-        params[:name] = 'testflavor'
+        params[:name]  = 'testflavor'
         params[:'os-flavor-access:is_public'] = false
       end
       response.body[:flavor]
+    end
+
+
+    def add_access(flavor_id, tenant_id)
+      response = session.compute_service.request :add_project_flavor, :api_version => :v2 do |params|
+        params[:tenant_id] = tenant_id
+        params[:flavor_id] = flavor_id
+      end
+      response.body[:flavor_access]
+    end
+
+
+    def delete_flavor(id)
+      session.compute_service.request :delete_flavor, :api_version => :v2 do |params|
+        params[:flavor_id] = id
+      end
     end
 
 
@@ -77,7 +93,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -103,8 +119,8 @@ class Aviator::Test
     validate_attr :url do
       flavor_id    = 'test_flavor_id'
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{ |s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/flavors/test_flavor_id/os-flavor-access"
+      compute_url  = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['adminURL']
+      url          = "#{ compute_url }/flavors/test_flavor_id/os-flavor-access"
       request      = create_request
 
       request.url.must_equal url
@@ -112,18 +128,15 @@ class Aviator::Test
 
 
     validate_response 'valid flavor_id parameter is provided' do
-      # TODO: when params[:'os-flavor-access:is_public'] is supported
-      #       for create_flavor this should be updated
-      # tenant    = session.identity_service.request(:list_tenants).body[:tenants].first
-      # tenant_id = tenant[:id]
-      # flavor    = create_flavor
-      # flavor_id = flavor[:id]
-      # add_access(flavor_id, tenant_id)
+      tenant    = session.identity_service.request(:list_tenants, :api_version => :v2).body[:tenants].first
+      tenant_id = tenant[:id]
+      flavor    = create_flavor
+      flavor_id = flavor[:id]
+      service   = session.compute_service
 
-      flavor_id = "100"
-      service = session.compute_service
+      add_access(flavor_id, tenant_id)
 
-      response = service.request :list_flavor_tenants do |params|
+      response = service.request :list_flavor_tenants, :api_version => :v2 do |params|
         params[:flavor_id] = flavor_id
       end
 
@@ -136,13 +149,15 @@ class Aviator::Test
         fa[:tenant_id].wont_be_nil
         fa[:flavor_id].must_equal flavor_id
       end
+
+      delete_flavor(flavor_id)
     end
 
 
     validate_response 'invalid zone parameter is provided' do
       service = session.compute_service
 
-      response = service.request :list_flavor_tenants do |params|
+      response = service.request :list_flavor_tenants, :api_version => :v2 do |params|
         params[:flavor_id] = 'nonexistentfalseflavorid'
       end
 

@@ -5,7 +5,7 @@ class Aviator::Test
   describe 'aviator/openstack/volume/v2/admin/delete_volume_type' do
 
     def create_volume_type
-      response = session.volume_service.request :create_volume_type, api_version: :v2 do |params|
+      response = session.volume_service.request :create_volume_type, :api_version => :v2 do |params|
         params[:name] = 'test'
       end
 
@@ -61,13 +61,13 @@ class Aviator::Test
 
       volume_type.wont_be_empty
 
-      response = session.volume_service.request(:delete_volume_type, api_version: :v2) do |params|
+      response = session.volume_service.request(:delete_volume_type, :api_version => :v2) do |params|
         params[:id] = volume_type[:id]
       end
 
       response.status.must_equal 202
 
-      list = session.volume_service.request(:list_volume_types, api_version: :v2)
+      list = session.volume_service.request(:list_volume_types, :api_version => :v2)
       list.body[:volume_types].find { |type| type[:id] == volume_type[:id] }.must_be_nil
     end
 

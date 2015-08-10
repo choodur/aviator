@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/public/list_floating_ips' do
+  describe 'aviator/openstack/compute/requests/v2/public/list_floating_ips' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)
@@ -61,7 +61,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -76,8 +76,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/os-floating-ips"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      url         = "#{ compute_url }/os-floating-ips"
       request      = klass.new(session_data)
 
       request.url.must_equal url
@@ -89,7 +89,7 @@ class Aviator::Test
 
       response.status.must_equal 200
       response.body.wont_be_nil
-      response.body[:floating_ips].length.must_equal 0
+      response.body[:floating_ips].wont_be_nil
       response.headers.wont_be_nil
     end
 

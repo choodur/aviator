@@ -63,6 +63,7 @@ module Aviator
         [:ec2,      :v1],
         [:identity, :v2],
         [:image,    :v1],
+        [:image,    :v2],
         [:metering, :v1],
         [:s3,       :v1],
         [:volume,   :v1]
@@ -101,7 +102,7 @@ module Aviator
 
 
     def keystone_v3_style_service_info?
-        not session_data[:body][:token][:catalog].find{ |s| s[:type] == build_service_type_string }.nil?
+      not session_data[:body][:token][:catalog].find{ |s| s[:type] == build_service_type_string }.nil?
     end
 
 

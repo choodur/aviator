@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/image/v1/public/update_image' do
+  describe 'aviator/openstack/image/requests/v1/public/update_image' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -64,7 +64,7 @@ class Aviator::Test
 
     validate_attr :headers do
       headers = {
-        'X-Auth-Token' => get_session_data.token,
+        'X-Auth-Token' => get_session_data[:body][:access][:token][:id]
       }
 
       request = create_request
@@ -101,12 +101,11 @@ class Aviator::Test
 
 
     validate_attr :url do
-      session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'image' }
-      image_id     = "some-image-id"
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/v1/images/#{ image_id }"
+      image_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'image' }[:endpoints][0]['publicURL']
+      image_id  = "some-image-id"
+      url       = "#{ image_url }/v1/images/#{ image_id }"
 
-      request = klass.new(session_data) do |p|
+      request = klass.new(get_session_data) do |p|
         p[:id] = image_id
       end
 

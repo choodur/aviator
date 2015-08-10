@@ -1,5 +1,5 @@
 module Aviator
-  
+
   define_request :list_images, :inherit => [:openstack, :common, :v2, :public, :base] do
 
     meta :service, :compute

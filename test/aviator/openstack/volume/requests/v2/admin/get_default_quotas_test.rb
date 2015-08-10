@@ -31,7 +31,7 @@ class Aviator::Test
     def tenant_id
       return @tenant_id unless @tenant_id.nil?
 
-      response   = session.identity_service.request(:list_tenants)
+      response   = session.identity_service.request(:list_tenants, :api_version => :v2)
       @tenant_id = response.body[:tenants].last[:id]
     end
 
@@ -51,7 +51,7 @@ class Aviator::Test
 
     def v2_base_url
       unless @v2_base_url
-        @v2_base_url = get_session_data[:catalog].find { |s| s[:type] == 'volumev2' }[:endpoints].find{|e| e[:interface] == 'admin'}[:url]
+        @v2_base_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'volumev2' }[:endpoints][0]['adminURL']
       end
 
       @v2_base_url
@@ -82,7 +82,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       create_request(session_data).headers.must_equal headers
     end

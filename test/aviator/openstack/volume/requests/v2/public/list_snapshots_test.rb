@@ -5,21 +5,21 @@ class Aviator::Test
   describe 'aviator/openstack/volume/v2/public/list_snapshots' do
 
     def create_snapshot
-      response = session.volume_service.request(:create_volume, api_version: :v1) do |params|
+      response = session.volume_service.request(:create_volume, :api_version => :v1) do |params|
         params[:display_name]         = 'Volume for List Snapshots'
         params[:display_description]  = 'Volume for List Snapshots Description'
         params[:size]                 = '1'
       end
       @volume = response.body[:volume]
 
-      response = session.volume_service.request(:create_snapshot, api_version: :v2) do |params|
+      response = session.volume_service.request(:create_snapshot, :api_version => :v2) do |params|
         params[:name]         = 'Snapshot for List Test'
         params[:description]  = 'Snapshot for List Test Description'
         params[:volume_id]    =  @volume[:id]
         params[:force]        =  true
       end
 
-      # sleep 5
+      sleep 5 if VCR.current_cassette.recording?
       response.body[:snapshot]
     end
 
@@ -64,7 +64,7 @@ class Aviator::Test
       snapshot.wont_be_empty
 
       #list_snapshots
-      response = session.volume_service.request(:list_snapshots, api_version: :v2)
+      response = session.volume_service.request(:list_snapshots, :api_version => :v2)
 
       response.status.must_equal 200
       response.body[:snapshots].wont_be_nil
@@ -72,13 +72,13 @@ class Aviator::Test
 
 
       #delete snapshot
-      response = session.volume_service.request(:delete_snapshot, api_version: :v2) do |params|
+      response = session.volume_service.request(:delete_snapshot, :api_version => :v2) do |params|
         params[:snapshot_id] = snapshot[:id]
       end
 
-      # sleep 5
+      sleep 5 if VCR.current_cassette.recording?
       #delete volume
-      response = session.volume_service.request(:delete_volume, api_version: :v1) do |params|
+      response = session.volume_service.request(:delete_volume, :api_version => :v1) do |params|
         params[:id] = @volume[:id]
       end
     end

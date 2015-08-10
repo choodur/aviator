@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/add_project_flavor' do
+  describe 'aviator/openstack/compute/requests/v2/admin/add_project_flavor' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -42,6 +42,14 @@ class Aviator::Test
     end
 
 
+    def remove_access(flavor_id, tenant_id)
+      session.compute_service.request :remove_flavor_from_project, :api_version => :v2 do |params|
+        params[:flavor_id] = flavor_id
+        params[:tenant]    = tenant_id
+      end
+    end
+
+
     validate_attr :anonymous? do
       klass.anonymous?.must_equal false
     end
@@ -58,7 +66,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -71,13 +79,13 @@ class Aviator::Test
     end
 
     validate_response 'valid parameters are provided' do
-      tenant    = session.identity_service.request(:list_tenants).body[:tenants].first
+      tenant    = session.identity_service.request(:list_tenants, :api_version => :v2).body[:tenants].first
       tenant_id = tenant[:id]
 
-      flavor    = session.compute_service.request(:list_flavors).body[:flavors].first
+      flavor    = session.compute_service.request(:list_flavors, :api_version => :v2).body[:flavors].first
       flavor_id = flavor[:id]
 
-      response = session.compute_service.request :add_project_flavor do |params|
+      response = session.compute_service.request :add_project_flavor, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
         params[:flavor_id] = flavor_id
       end
@@ -86,20 +94,25 @@ class Aviator::Test
       response.body.wont_be_nil
       response.body[:flavor_access].wont_be_nil
       response.headers.wont_be_nil
+
+      remove_access(flavor_id, tenant_id)
     end
 
     validate_response 'invalid parameters are provided' do
-      flavor    = session.compute_service.request(:list_flavors).body[:flavors].first
+      flavor    = session.compute_service.request(:list_flavors, :api_version => :v2).body[:flavors].first
       flavor_id = flavor[:id]
+      tenant_id = ''
 
-      response = session.compute_service.request :add_project_flavor do |params|
-        params[:tenant_id] = ''
+      response = session.compute_service.request :add_project_flavor, :api_version => :v2 do |params|
+        params[:tenant_id] = tenant_id
         params[:flavor_id] = flavor_id
       end
 
       response.status.must_equal 200
       response.body.wont_be_nil
       response.headers.wont_be_nil
+
+      remove_access(flavor_id, tenant_id)
     end
 
 

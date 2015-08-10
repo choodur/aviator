@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/admin/remove_flavor_from_project' do
+  describe 'aviator/openstack/compute/requests/v2/admin/remove_flavor_from_project' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -58,7 +58,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -85,18 +85,19 @@ class Aviator::Test
 
 
     def create_flavor
-      response = session.compute_service.request :create_flavor do |params|
+      response = session.compute_service.request :create_flavor, :api_version => :v2 do |params|
         params[:disk] = '1'
         params[:ram] = '1'
         params[:vcpus] = '1'
         params[:name] = 'testflavor'
       end
+
       response.body[:flavor]
     end
 
 
     def add_access(flavor_id, tenant_id)
-      response = session.compute_service.request :add_project_flavor do |params|
+      response = session.compute_service.request :add_project_flavor, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
         params[:flavor_id] = flavor_id
       end
@@ -104,12 +105,18 @@ class Aviator::Test
     end
 
 
-    validate_attr :url do
-      flavor_id = 'sample_flavor_id'
-      tenant = 'sample_tenant'
+    def delete_flavor(id)
+      session.compute_service.request :delete_flavor, :api_version => :v2 do |params|
+        params[:flavor_id] = id
+      end
+    end
 
-      service_spec = get_session_data[:catalog].find { |s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/flavors/#{ flavor_id }/action"
+
+    validate_attr :url do
+      flavor_id   = 'sample_flavor_id'
+      tenant      = 'sample_tenant'
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['adminURL']
+      url         = "#{ compute_url }/flavors/#{ flavor_id }/action"
 
       request = create_request do |p|
         p[:flavor_id] = flavor_id
@@ -121,13 +128,13 @@ class Aviator::Test
 
 
     validate_response 'valid params are provided' do
-      tenant    = session.identity_service.request(:list_tenants).body[:tenants].first
+      tenant    = session.identity_service.request(:list_tenants, :api_version => :v2).body[:tenants].first
       tenant_id = tenant[:id]
       flavor    = create_flavor
       flavor_id = flavor[:id]
       add_access(flavor_id, tenant_id)
 
-      response = session.compute_service.request :remove_flavor_from_project do |params|
+      response = session.compute_service.request :remove_flavor_from_project, :api_version => :v2 do |params|
         params[:flavor_id] = flavor_id
         params[:tenant] = tenant_id
       end
@@ -135,6 +142,8 @@ class Aviator::Test
       response.status.must_equal 200
       response.body[:flavor_access].wont_be_nil
       response.headers.wont_be_nil
+
+      delete_flavor(flavor_id)
     end
 
 
@@ -144,7 +153,7 @@ class Aviator::Test
       flavor_id = '100'
       tenant = 'abogustenantidthatdoesnotexist'
 
-      response = session.compute_service.request :remove_flavor_from_project do |params|
+      response = session.compute_service.request :remove_flavor_from_project, :api_version => :v2 do |params|
         params[:flavor_id] = flavor_id
         params[:tenant] = tenant
       end

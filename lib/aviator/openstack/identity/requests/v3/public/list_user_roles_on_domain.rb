@@ -16,7 +16,7 @@ module Aviator
       h = {}
 
       unless self.anonymous?
-        h['X-Auth-Token'] = session_data.token
+        h['X-Auth-Token'] = session_data[:body][:access][:token][:id]
       end
 
       h

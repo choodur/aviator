@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/public/stop_server' do
+  describe 'aviator/openstack/compute/requests/v2/public/stop_server' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda { |params| params[:id] = 0 }
@@ -89,7 +89,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -108,9 +108,9 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{ |s| s[:type] == 'compute' }
-      server_id    = 'sampleId'
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/servers/#{ server_id }/action"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      server_id   = 'sampleId'
+      url         = "#{ compute_url }/servers/#{ server_id }/action"
 
       request = create_request do |params|
         params[:id] = server_id

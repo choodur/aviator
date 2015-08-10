@@ -59,7 +59,7 @@ class Aviator::Test
     end
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -71,7 +71,7 @@ class Aviator::Test
     end
 
     validate_response 'no parameters are provided' do
-      response = session.volume_service.request :list_volume_types
+      response = session.volume_service.request :list_volume_types, :api_version => :v2
 
       response.status.must_equal 200
       response.body.wont_be_nil

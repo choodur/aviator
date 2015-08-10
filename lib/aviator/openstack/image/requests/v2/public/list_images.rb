@@ -27,7 +27,7 @@ module Aviator
     end
 
     def url
-      uri = "#{ base_url }/images"
+      path = "#{ base_url }/v2/images"
 
       filters = []
 
@@ -39,9 +39,9 @@ module Aviator
         filters << "#{ sort_key }=#{ value }"
       end if params[:sort_keys]
 
-      url += "?#{ filters.join('&') }" unless filters.empty?
+      path += "?#{ filters.join('&') }" unless filters.empty?
 
-      url
+      path
     end
 
   end

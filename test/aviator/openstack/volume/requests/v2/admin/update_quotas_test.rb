@@ -31,7 +31,7 @@ class Aviator::Test
     def tenant_id
       return @tenant_id unless @tenant_id.nil?
 
-      response   = session.identity_service.request(:list_tenants)
+      response   = session.identity_service.request(:list_tenants, :api_version => :v2)
       @tenant_id = response.body[:tenants].last[:id]
     end
 
@@ -51,7 +51,7 @@ class Aviator::Test
 
     def v2_base_url
       unless @v2_base_url
-        @v2_base_url = get_session_data[:catalog].find { |s| s[:type] == 'volumev2' }[:endpoints].find{|e| e[:interface] == 'admin'}[:url]
+        @v2_base_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'volumev2' }[:endpoints][0]['adminURL']
       end
 
       @v2_base_url
@@ -85,7 +85,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       create_request(session_data).headers.must_equal headers
     end
@@ -128,7 +128,7 @@ class Aviator::Test
         value = 10
         tenant = tenant_id
 
-        response = session.volume_service.request(:update_quotas, api_version: :v2) do |params|
+        response = session.volume_service.request(:update_quotas, :api_version => :v2) do |params|
           params[:tenant_id]  = tenant
           params[param]       = value
         end
@@ -146,7 +146,7 @@ class Aviator::Test
         value = 'stringyValue'
         tenant = tenant_id
 
-        response = session.volume_service.request(:update_quotas, api_version: :v2) do |params|
+        response = session.volume_service.request(:update_quotas, :api_version => :v2) do |params|
           params[:tenant_id]  = tenant
           params[param]       = value
         end
@@ -160,7 +160,7 @@ class Aviator::Test
     end
 
     validate_response 'custom quotas are from volume types' do
-      create_type = session.volume_service.request(:create_volume_type, api_version: :v2) do |params|
+      create_type = session.volume_service.request(:create_volume_type, :api_version => :v2) do |params|
         params[:name] = 'quota-test'
       end
 
@@ -172,7 +172,7 @@ class Aviator::Test
       custom_snapshots = "snapshots_#{volume_type[:name]}"
       custom_volumes   = "volumes_#{volume_type[:name]}"
 
-      response = session.volume_service.request(:update_quotas, api_version: :v2) do |params|
+      response = session.volume_service.request(:update_quotas, :api_version => :v2) do |params|
         params[:tenant_id]     = tenant_id
         params[:custom_quotas] = {
           custom_gigabytes => limit,
@@ -187,7 +187,7 @@ class Aviator::Test
       response.body[:quota_set][custom_snapshots].must_equal limit
       response.body[:quota_set][custom_volumes].must_equal limit
 
-      session.volume_service.request(:delete_volume_type, api_version: :v2) do |params|
+      session.volume_service.request(:delete_volume_type, :api_version => :v2) do |params|
         params[:id] = volume_type[:id]
       end
     end
@@ -200,11 +200,11 @@ class Aviator::Test
       custom_volumes   = "volumes_#{dummy_type}"
 
 
-      list = session.volume_service.request(:list_volume_types)
+      list = session.volume_service.request(:list_volume_types, :api_version => :v2)
 
       list.body[:volume_types].find { |type| type[:name] == dummy_type }.must_be_nil
 
-      response = session.volume_service.request(:update_quotas, api_version: :v2) do |params|
+      response = session.volume_service.request(:update_quotas, :api_version => :v2) do |params|
         params[:tenant_id]     = tenant_id
         params[:custom_quotas] = {
           custom_gigabytes => limit,

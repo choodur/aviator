@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/v2/admin/list_user_roles_on_tenant' do
+  describe 'aviator/openstack/identity/requests/v2/admin/list_user_roles_on_tenant' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -20,7 +20,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -66,7 +66,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -83,10 +83,8 @@ class Aviator::Test
       tenant_id = 'sample_tenant_id'
       user_id = 'sample_user_id'
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'identity' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/tenants/#{ tenant_id }"
-      url         += "/users/#{ user_id }"
-      url         += "/roles"
+      identity_url = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'identity' }[:endpoints][0]['adminURL']
+      url          = "#{ identity_url }/tenants/#{ tenant_id }/users/#{ user_id }/roles"
 
       request = create_request do |p|
         p[:tenant_id] = tenant_id
@@ -98,14 +96,12 @@ class Aviator::Test
 
 
     validate_response 'valid ids are provided' do
-      # must be hardcoded so as not to inadvertently alter random resources
-      # in case the corresponding cassette is deleted
-      tenant_id = '5797bb4fb10c416bb2fb6534d12bd34b'
-      user_id   = 'fec7a3dbda2f44abbc8ad61aab4e8305'
+      tenant_id = helper.get_project(session, 'admin')[:id]
+      user_id   = helper.get_user(session, 'admin')[:id]
 
-      response = session.identity_service.request :list_user_roles_on_tenant do |params|
+      response = session.identity_service.request :list_user_roles_on_tenant, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
-        params[:user_id] = user_id
+        params[:user_id]   = user_id
       end
 
       response.status.must_equal 200
@@ -116,14 +112,12 @@ class Aviator::Test
 
 
     validate_response 'invalid tenant_id is provided' do
-      # must be hardcoded so as not to inadvertently alter random resources
-      # in case the corresponding cassette is deleted
-      tenant_id = 'abogustenantidthatdoesnotexist'
-      user_id   = 'fec7a3dbda2f44abbc8ad61aab4e8305'
+      tenant_id = 'tenantDoesNotExist'
+      user_id   = helper.get_user(session, 'admin')[:id]
 
-      response = session.identity_service.request :list_user_roles_on_tenant do |params|
+      response = session.identity_service.request :list_user_roles_on_tenant, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
-        params[:user_id] = user_id
+        params[:user_id]   = user_id
       end
 
       response.status.must_equal 404
@@ -133,14 +127,12 @@ class Aviator::Test
 
 
     validate_response 'invalid user_id is provided' do
-      # must be hardcoded so as not to inadvertently alter random resources
-      # in case the corresponding cassette is deleted
-      tenant_id = '5797bb4fb10c416bb2fb6534d12bd34b'
-      user_id   = 'abogustenantidthatdoesnotexist'
+      tenant_id = helper.get_project(session, 'admin')[:id]
+      user_id   = 'userDoesNotExist'
 
-      response = session.identity_service.request :list_user_roles_on_tenant do |params|
+      response = session.identity_service.request :list_user_roles_on_tenant, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
-        params[:user_id] = user_id
+        params[:user_id]   = user_id
       end
 
       response.status.must_equal 404

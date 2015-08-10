@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/v3/public/list_domains' do
+  describe 'aviator/openstack/identity/requests/v3/public/list_domains' do
 
     def session
       unless @session
@@ -18,7 +18,7 @@ class Aviator::Test
 
     validate_response 'parameters are valid' do
       service   = session.identity_service
-      response  = service.request :list_domains, :version => :v3
+      response  = service.request :list_domains, :api_version => :v3
 
       response.status.must_equal 200
       response.body.wont_be_nil

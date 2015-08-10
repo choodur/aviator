@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/requests/v2/public/allocate_floating_ip' do
+  describe 'aviator/openstack/compute/requests/requests/v2/public/allocate_floating_ip' do
 
     def create_request(session_data = get_session_data)
       klass.new(session_data)
@@ -86,8 +86,8 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:body][:access][:serviceCatalog].find{|s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints][0][:publicURL] }/os-floating-ips"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      url         = "#{ compute_url }/os-floating-ips"
 
       request = create_request
 

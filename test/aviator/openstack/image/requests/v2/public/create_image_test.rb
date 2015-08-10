@@ -3,7 +3,7 @@ require 'open-uri'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/image/v2/public/create_image' do
+  describe 'aviator/openstack/image/requests/v2/public/create_image' do
 
     def create_request(session_data = get_session_data)
       klass.new(session_data)
@@ -36,6 +36,7 @@ class Aviator::Test
 
       @session
     end
+
 
     validate_attr :anonymous? do
       klass.anonymous?.must_equal false
@@ -87,17 +88,15 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{|s| s[:type] == 'image' }
-      uri          = URI(service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url])
-      url          = "#{ uri.scheme }://#{ uri.host }:#{ uri.port.to_s }/v2/images"
+      image_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'image' }[:endpoints][0]['publicURL']
+      url       = "#{ image_url }/v2/images"
 
       create_request.url.must_equal url
     end
 
     validate_response 'valid params are provided' do
-      response = session.image_service.request :create_image do |params|
+      response = session.image_service.request :create_image, :api_version => :v2 do |params|
         params[:name]             = 'CirrOS'
-        params[:copy_from]        = 'http://download.cirros-cloud.net/0.3.1/cirros-0.3.1-x86_64-disk.img'
         params[:disk_format]      = 'ari'
         params[:container_format] = 'ari'
       end
@@ -107,27 +106,15 @@ class Aviator::Test
     end
 
     validate_response 'no parameters are provided' do
-      images          = session.image_service.request(:list_public_images).body[:images]
-      response        = session.image_service.request(:create_image)
-      updated_images  = session.image_service.request(:list_public_images).body[:images]
-
-      response.status.must_equal 201
-      response.body.wont_be_nil
-      updated_images.length.must_equal(images.length + 1)
-    end
-
-    validate_response 'invalid copy from url is provided' do
-      response = session.image_service.request :create_image do |params|
-        params[:name]       = 'test image'
-        params[:copy_from]  = 'someinvalidurl'
-      end
+      images          = session.image_service.request(:list_images, :api_version => :v2).body[:images]
+      response        = session.image_service.request(:create_image, :api_version => :v2)
+      updated_images  = session.image_service.request(:list_images, :api_version => :v2).body[:images]
 
       response.status.must_equal 400
-      response.headers.wont_be_nil
     end
 
     validate_response 'invalid disk format is provided' do
-      response = session.image_service.request :create_image do |params|
+      response = session.image_service.request :create_image, :api_version => :v2 do |params|
         params[:name]         = 'test image'
         params[:disk_format]  = 'xxx'
       end
@@ -137,7 +124,7 @@ class Aviator::Test
     end
 
     validate_response 'invalid container format is provided' do
-      response = session.image_service.request :create_image do |params|
+      response = session.image_service.request :create_image, :api_version => :v2 do |params|
         params[:name]             = 'test image'
         params[:container_format] = 'xxx'
       end
@@ -147,53 +134,15 @@ class Aviator::Test
     end
 
     validate_response 'existing image id is provided' do
-      image = session.image_service.request(:create_image).body[:image]
+      image_id = session.image_service.request(:list_images, :api_version => :v2).body[:images][0][:id]
 
-      response = session.image_service.request :create_image do |params|
+      response = session.image_service.request :create_image, :api_version => :v2 do |params|
         params[:name] = 'test image'
-        params[:id]   = image[:id]
+        params[:id]   = image_id
       end
 
-      response.status.must_equal 409
+      response.status.must_equal 500
       response.headers.wont_be_nil
-    end
-
-    validate_response 'existing image id is provided' do
-      image = session.image_service.request(:create_image).body[:image]
-
-      response = session.image_service.request :create_image do |params|
-        params[:name] = 'test image'
-        params[:id]   = image[:id]
-      end
-
-      response.status.must_equal 409
-      response.headers.wont_be_nil
-    end
-
-    validate_response 'valid file parameter is provided' do
-      test_file = Pathname.new(__FILE__).join('..', '..', '..', '..', '..', '..', 'data', 'cirros-0.3.0-x86_64-initrd').expand_path
-      file = File.open(test_file, 'r')
-      file.close
-
-      response = session.image_service.request :create_image do |params|
-        params[:name]         = 'test image'
-        params[:file]         = file.path
-        params[:disk_format]  = 'ami'
-      end
-
-      response.status.must_equal 201
-      response.headers.wont_be_nil
-    end
-
-    validate_response 'invalid file parameter is provided' do
-      request = lambda do
-        response = session.image_service.request :create_image do |params|
-          params[:name] = 'test image'
-          params[:file] = 'imagedoesntexist'
-        end
-      end
-
-      request.must_raise Errno::ENOENT
     end
 
   end

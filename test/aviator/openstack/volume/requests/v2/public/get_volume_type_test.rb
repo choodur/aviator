@@ -38,14 +38,14 @@ class Aviator::Test
     end
 
     validate_response 'parameters are provided' do
-      create = session.volume_service.request(:create_volume_type, api_version: :v2) do |params|
+      create = session.volume_service.request(:create_volume_type, :api_version => :v2) do |params|
         params[:name] = 'SSD'
       end
 
       volume_type = create.body[:volume_type]
       volume_type.wont_be_empty
 
-      response = session.volume_service.request(:get_volume_type, api_version: :v2) do |params|
+      response = session.volume_service.request(:get_volume_type, :api_version => :v2) do |params|
         params[:id] = volume_type[:id]
       end
 
@@ -54,7 +54,7 @@ class Aviator::Test
       response.body[:volume_type][:name].must_equal volume_type[:name]
 
 
-      session.volume_service.request(:delete_volume_type, api_version: :v2) do |params|
+      session.volume_service.request(:delete_volume_type, :api_version => :v2) do |params|
         params[:id] = volume_type[:id]
       end
     end

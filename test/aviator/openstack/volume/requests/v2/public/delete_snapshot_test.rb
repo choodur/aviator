@@ -5,21 +5,21 @@ class Aviator::Test
   describe 'aviator/openstack/volume/v2/public/delete_snapshot' do
 
     def create_snapshot
-      response = session.volume_service.request :create_volume, api_version: :v1 do |params|
+      response = session.volume_service.request :create_volume, :api_version => :v1 do |params|
         params[:display_name]         = 'Volume for Delete Snapshot'
         params[:display_description]  = 'Volume for Delete Snapshot Description'
         params[:size]                 = '1'
       end
       @volume = response.body[:volume]
 
-      response = session.volume_service.request(:create_snapshot, api_version: :v2) do |params|
+      response = session.volume_service.request(:create_snapshot, :api_version => :v2) do |params|
         params[:name]         = 'Snapshot for Delete Test'
         params[:description]  = 'Snapshot for Delete Test Description'
         params[:volume_id]    =  @volume[:id]
         params[:force]        =  true
       end
 
-      # sleep 5
+      sleep 5 if VCR.current_cassette.recording?
       @snapshot = response.body[:snapshot]
     end
 
@@ -64,20 +64,20 @@ class Aviator::Test
       snapshot.wont_be_empty
 
       #delete snapshot
-      response = session.volume_service.request(:delete_snapshot, api_version: :v2) do |params|
+      response = session.volume_service.request(:delete_snapshot, :api_version => :v2) do |params|
         params[:snapshot_id] = snapshot[:id]
       end
 
       response.status.must_equal 202
 
-      # sleep 5
+      sleep 5 if VCR.current_cassette.recording?
 
-      list = session.volume_service.request(:list_snapshots, api_version: :v2)
+      list = session.volume_service.request(:list_snapshots, :api_version => :v2)
       list.body[:snapshots].collect{ |s| s[:id] }.include?(snapshot[:id]).must_equal false
 
-      # sleep 5
+      sleep 5 if VCR.current_cassette.recording?
       #delete volume
-      response = session.volume_service.request(:delete_volume, api_version: :v1) do |params|
+      response = session.volume_service.request(:delete_volume, :api_version => :v1) do |params|
         params[:id] = @volume[:id]
       end
     end

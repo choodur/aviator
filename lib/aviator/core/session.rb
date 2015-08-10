@@ -1,4 +1,4 @@
- #
+#
 # Author::    Mark Maglana (mmaglana@gmail.com)
 # Copyright:: Copyright (c) 2014 Mark Maglana
 # License::   Distributed under the MIT license
@@ -11,8 +11,6 @@ module Aviator
   # for a consumer class/object. See Session::new for notes on usage.
   #
   class Session
-
-    require 'erb'
 
     class AuthenticationError < StandardError
       def initialize(last_auth_body)

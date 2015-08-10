@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v1/admin/get_default_quotas' do
+  describe 'aviator/openstack/volume/requests/v1/admin/get_default_quotas' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -31,7 +31,7 @@ class Aviator::Test
     def tenant_id
       return @tenant_id unless @tenant_id.nil?
 
-      response   = session.identity_service.request(:list_tenants)
+      response   = session.identity_service.request(:list_tenants, :api_version => :v2)
       @tenant_id = response.body[:tenants].last[:id]
     end
 
@@ -49,57 +49,57 @@ class Aviator::Test
     end
 
 
-    # validate_attr :anonymous? do
-    #   klass.anonymous?.must_equal false
-    # end
+    validate_attr :anonymous? do
+      klass.anonymous?.must_equal false
+    end
 
 
-    # validate_attr :api_version do
-    #   klass.api_version.must_equal :v1
-    # end
+    validate_attr :api_version do
+      klass.api_version.must_equal :v1
+    end
 
 
-    # validate_attr :body do
-    #   klass.body?.must_equal false
-    #   create_request.body?.must_equal false
-    # end
+    validate_attr :body do
+      klass.body?.must_equal false
+      create_request.body?.must_equal false
+    end
 
 
-    # validate_attr :endpoint_type do
-    #   klass.endpoint_type.must_equal :admin
-    # end
+    validate_attr :endpoint_type do
+      klass.endpoint_type.must_equal :admin
+    end
 
 
-    # validate_attr :headers do
-    #   session_data = get_session_data
+    validate_attr :headers do
+      session_data = get_session_data
 
-    #   headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
-    #   create_request(session_data).headers.must_equal headers
-    # end
-
-
-    # validate_attr :http_method do
-    #   create_request.http_method.must_equal :get
-    # end
+      create_request(session_data).headers.must_equal headers
+    end
 
 
-    # validate_attr :required_params do
-    #   klass.required_params.must_equal [:tenant_id]
-    # end
+    validate_attr :http_method do
+      create_request.http_method.must_equal :get
+    end
 
 
-    # validate_attr :url do
-    #   session_data = get_session_data
-    #   service_spec = session_data[:catalog].find { |s| s[:type] == 'volume' }
-    #   url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/os-quota-sets/#{ tenant_id }/defaults"
+    validate_attr :required_params do
+      klass.required_params.must_equal [:tenant_id]
+    end
 
-    #   request = klass.new(session_data) do |p|
-    #     p[:tenant_id] = tenant_id
-    #   end
 
-    #   request.url.must_equal url
-    # end
+    validate_attr :url do
+      session_data = get_session_data
+      volume_url   = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'volume' }[:endpoints][0]['adminURL']
+      url          = "#{ volume_url }/os-quota-sets/#{ tenant_id }/defaults"
+
+      request = klass.new(session_data) do |p|
+        p[:tenant_id] = tenant_id
+      end
+
+      request.url.must_equal url
+    end
 
 
     validate_response 'valid params are provided' do

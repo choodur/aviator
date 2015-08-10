@@ -89,7 +89,6 @@ module Aviator
 
       raise SessionDataNotProvidedError.new(@service, request_name) unless session_data
 
-      raise SessionDataNotProvidedError.new if session_data.empty?
       [:base_url].each do |k|
         session_data[k] = options[k] if options[k]
       end
@@ -143,11 +142,11 @@ module Aviator
 
     def load_requests
       request_file_paths = provider_module.request_file_paths(service)
-      request_file_paths.each{ |path| require path }
+      request_file_paths.each { |path| require path }
 
       constant_parts = request_file_paths \
-                        .map{|rf| rf.to_s.match(/#{provider}\/#{service}\/([\w\/]+)\.rb$/) } \
-                        .map{|rf| rf[1].split('/').map{|c| StrUtil.camelize(c) }.join('::') }
+                        .map { |rf| rf.to_s.match(/#{provider}\/#{service}\/([\w\/]+)\.rb$/) } \
+                        .map { |rf| rf[1].split('/').map{|c| StrUtil.camelize(c) }.join('::') }
 
       @request_classes = constant_parts.map do |cp|
         StrUtil.constantize("Aviator::#{StrUtil.camelize(provider)}::#{StrUtil.camelize(service)}::#{cp}")

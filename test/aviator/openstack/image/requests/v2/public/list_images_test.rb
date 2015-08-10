@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/image/v2/public/list_images' do
+  describe 'aviator/openstack/image/requests/v2/public/list_images' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)
@@ -37,17 +37,6 @@ class Aviator::Test
     end
 
 
-    def v2_base_url
-      unless @v2_base_url
-        #binding.pry
-        @v2_base_url = get_session_data[:catalog].find { |s| s[:type] == 'image' }[:endpoints].find{|a| a[:interface] == 'public'}[:url]
-        @v2_base_url << '/v2'
-      end
-
-      @v2_base_url
-    end
-
-
     validate_attr :anonymous? do
       klass.anonymous?.must_equal false
     end
@@ -70,7 +59,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -101,7 +90,7 @@ class Aviator::Test
 
 
     validate_attr :url do
-      v2_base_url = get_session_data[:catalog].find { |s| s[:type] == 'image' }[:endpoints].find{|a| a[:interface] == 'public'}[:url]
+      v2_base_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'image' }[:endpoints][0]['publicURL']
       url         = "#{ v2_base_url }/v2/images"
       request     = klass.new(get_session_data)
 
@@ -115,7 +104,7 @@ class Aviator::Test
 
 
     validate_response 'no parameters are provided' do
-      response = session.image_service.request(:list_images, api_version: :v2)
+      response = session.image_service.request(:list_images, :api_version => :v2)
 
       response.status.must_equal 200
       response.body.wont_be_nil
@@ -125,7 +114,7 @@ class Aviator::Test
 
 
     validate_response 'filtering with matches' do
-      response = session.image_service.request(:list_images, api_version: :v2) do |p|
+      response = session.image_service.request(:list_images, :api_version => :v2) do |p|
         p[:name] = 'cirros-0.3.1-x86_64-uec'
       end
 
@@ -137,7 +126,7 @@ class Aviator::Test
 
 
     validate_response 'filtering with sort keys' do
-      response = session.image_service.request(:list_images, api_version: :v2) do |p|
+      response = session.image_service.request(:list_images, :api_version => :v2) do |p|
         p[:sort_keys] = {
           min_disk: 0,
           min_ram: 0
@@ -153,7 +142,7 @@ class Aviator::Test
 
 
     validate_response 'filtering with no matches' do
-      response = session.image_service.request(:list_images, api_version: :v2) do |p|
+      response = session.image_service.request(:list_images, :api_version => :v2) do |p|
         p[:name] = 'does-not-match-any-image'
       end
 

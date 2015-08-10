@@ -1,11 +1,8 @@
 module Aviator
 
-  define_request :list_roles do
+  define_request :list_roles, :inherit => [:openstack, :common, :v2, :admin, :base] do
 
-    meta :provider,      :openstack
-    meta :service,       :identity
-    meta :api_version,   :v2
-    meta :endpoint_type, :admin
+    meta :service, :identity
 
     link 'documentation',
       'http://api.openstack.org/api-ref-identity.html#os-ksadm-admin-ext'
@@ -15,7 +12,7 @@ module Aviator
       h = {}
 
       unless self.anonymous?
-        h['X-Auth-Token'] = session_data.token
+        h['X-Auth-Token'] = session_data[:body][:access][:token][:id]
       end
 
       h

@@ -138,14 +138,14 @@ EOF
 
 
       def request_file_paths(service)
-          Dir.glob(Pathname.new(__FILE__).join(
-            '..',
-             service.to_s,
-            'requests',
-            '**',
-            '*.rb'
-            ).expand_path
-          )
+        Dir.glob(Pathname.new(__FILE__).join(
+          '..',
+           service.to_s,
+          'requests',
+          '**',
+          '*.rb'
+          ).expand_path
+        )
       end
 
 
@@ -153,7 +153,7 @@ EOF
 
       def infer_version(session_data, request_name, service)
         if session_data.has_key?(:auth_service) && session_data[:auth_service][:api_version]
-        session_data[:auth_service][:api_version].to_sym
+          session_data[:auth_service][:api_version].to_sym
 
         elsif session_data.has_key?(:auth_service) && session_data[:auth_service][:host_uri]
           m = session_data[:auth_service][:host_uri].match(/(v\d+)\.?\d*/)

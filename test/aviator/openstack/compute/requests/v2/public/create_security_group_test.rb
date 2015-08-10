@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/public/create_security_group' do
+  describe 'aviator/openstack/compute/requests/v2/public/create_security_group' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -17,7 +17,7 @@ class Aviator::Test
     end
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
     def klass
@@ -57,7 +57,7 @@ class Aviator::Test
     end
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
 
@@ -77,8 +77,8 @@ class Aviator::Test
     end
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{ |s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url] }/os-security-groups"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      url         = "#{ compute_url }/os-security-groups"
 
       request = create_request
 
@@ -100,6 +100,8 @@ class Aviator::Test
       response.body[:security_group][:name].must_equal sec_name
       response.body[:security_group][:description].must_equal sec_desc
       response.headers.wont_be_nil
+
+      helper.delete_security_group(session, response.body[:security_group][:id])
     end
   end
 end

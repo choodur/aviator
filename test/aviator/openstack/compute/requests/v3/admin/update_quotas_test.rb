@@ -31,7 +31,7 @@ class Aviator::Test
     def tenant_id
       return @tenant_id unless @tenant_id.nil?
 
-      response   = session.identity_service.request(:list_tenants)
+      response   = session.identity_service.request(:list_tenants, :api_version => :v2)
       @tenant_id = response.body[:tenants].last[:id]
     end
 
@@ -51,7 +51,7 @@ class Aviator::Test
 
     def v3_base_url
       unless @v3_base_url
-        @v3_base_url = get_session_data[:catalog].find { |s| s[:type] == 'computev3' }[:endpoints].find{|e| e[:interface] == 'admin'}[:url]
+        @v3_base_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'computev3' }[:endpoints][0]['adminURL']
       end
 
       @v3_base_url
@@ -85,7 +85,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       create_request(session_data).headers.must_equal headers
     end
@@ -102,9 +102,6 @@ class Aviator::Test
         :fixed_ips,
         :floating_ips,
         :force,
-        :injected_file_content_bytes,
-        :injected_file_path_bytes,
-        :injected_files,
         :instances,
         :key_pairs,
         :metadata_items,
@@ -139,7 +136,7 @@ class Aviator::Test
         value   = 10
         tenant  = tenant_id
 
-        response = session.compute_service.request :update_quotas do |params|
+        response = session.compute_service.request :update_quotas, :api_version => :v3 do |params|
           params[:tenant_id]  = tenant
           params[param]       = value
         end
@@ -159,7 +156,7 @@ class Aviator::Test
         value   = 'stringyValue'
         tenant  = tenant_id
 
-        response = session.compute_service.request :update_quotas do |params|
+        response = session.compute_service.request :update_quotas, :api_version => :v3 do |params|
           params[:tenant_id]  = tenant
           params[param]       = value
         end

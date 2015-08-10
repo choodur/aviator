@@ -12,7 +12,7 @@ module Aviator
 
     def headers
       h = {
-        'X-Auth-Token'                  => session_data.token,
+        'X-Auth-Token'                  => session_data[:body][:access][:token][:id],
         'x-image-meta-status'           => params[:status],
         'x-glance-registry-purge-props' => 'False'
       }
@@ -25,7 +25,7 @@ module Aviator
     end
 
     def url
-      "#{ base_url}/images/#{ params[:id] }"
+      "#{ base_url}/v1/images/#{ params[:id] }"
     end
 
   end

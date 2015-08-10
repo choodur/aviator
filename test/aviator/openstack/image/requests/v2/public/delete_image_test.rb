@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/image/v2/public/delete_image' do
+  describe 'aviator/openstack/image/requests/v2/public/delete_image' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -65,7 +65,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -89,7 +89,7 @@ class Aviator::Test
 
 
     validate_attr :url do
-      v2_base_url = get_session_data[:catalog].find { |s| s[:type] == 'image' }[:endpoints].find{|a| a[:interface] == 'public'}[:url]
+      v2_base_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'image' }[:endpoints][0]['publicURL']
       image_id    = 'it does not matter for this test'
       url         = "#{ v2_base_url }/v2/images/#{ image_id }"
 
@@ -102,10 +102,11 @@ class Aviator::Test
 
 
     validate_response 'valid params are provided' do
-      image    = session.image_service.request(:create_image).body[:image]
-      image_id = image[:id]
+      image_id = session.image_service
+                  .request(:create_image, :api_version => :v2, :params => { :name => 'test' })
+                  .body[:id]
 
-      response = session.image_service.request(:delete_image, api_version: :v2) do |params|
+      response = session.image_service.request(:delete_image, :api_version => :v2) do |params|
         params[:id] = image_id
       end
 
@@ -117,7 +118,7 @@ class Aviator::Test
     validate_response 'invalid params are provided' do
       image_id = 'bogusimageid'
 
-      response = session.image_service.request(:delete_image, api_version: :v2) do |params|
+      response = session.image_service.request(:delete_image, :api_version => :v2) do |params|
         params[:id] = image_id
       end
 

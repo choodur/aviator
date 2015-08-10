@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/requests/v2/public/create_keypair' do
+  describe 'aviator/openstack/compute/requests/requests/v2/public/create_keypair' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -95,8 +95,8 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:body][:access][:serviceCatalog].find{|s| s[:type] == 'compute' }
-      url          = "#{ service_spec[:endpoints][0][:publicURL] }/os-keypairs"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      url         = "#{ compute_url }/os-keypairs"
 
       request = create_request do |params|
         params[:name] = 'somename'

@@ -3,7 +3,7 @@ require 'open-uri'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/image/v1/public/create_image' do
+  describe 'aviator/openstack/image/requests/v1/public/create_image' do
 
     def create_request(session_data = get_session_data)
       klass.new(session_data)
@@ -62,7 +62,7 @@ class Aviator::Test
 
     validate_attr :headers do
       headers = {
-        'X-Auth-Token' => get_session_data.token,
+        'X-Auth-Token' => get_session_data[:body][:access][:token][:id],
         'Content-Type' => 'application/octet-stream'
       }
 
@@ -104,9 +104,8 @@ class Aviator::Test
 
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{|s| s[:type] == 'image' }
-      uri          = URI(service_spec[:endpoints].find{|e| e[:interface] == 'public'}[:url])
-      url          = "#{ uri.scheme }://#{ uri.host }:#{ uri.port.to_s }/v1/images"
+      image_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'image' }[:endpoints][0]['publicURL']
+      url       = "#{ image_url }/v1/images"
 
       create_request.url.must_equal url
     end
@@ -188,7 +187,7 @@ class Aviator::Test
     end
 
     validate_response 'valid file parameter is provided' do
-      test_file = Pathname.new(__FILE__).join('..', '..', '..', '..', '..', '..', 'data', 'cirros-0.3.0-x86_64-initrd').expand_path
+      test_file = Pathname.new(__FILE__).join('..', '..', '..', '..', '..', '..', '..', 'data', 'cirros-0.3.0-x86_64-initrd').expand_path
       file = File.open(test_file, 'r')
       file.close
 

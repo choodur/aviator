@@ -1,5 +1,5 @@
 module Aviator
-  
+
   define_request :delete_image, :inherit => [:openstack, :common, :v2, :public, :base] do
 
     meta :service, :compute

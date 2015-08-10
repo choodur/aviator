@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v2/public/detach_volume' do
+  describe 'aviator/openstack/compute/requests/v2/public/detach_volume' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -18,7 +18,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -60,37 +60,6 @@ class Aviator::Test
       response
     end
 
-    def attach_volume
-   		server_list_response  = session.compute_service.request :list_servers
-      volume_list_response  = session.volume_service.request  :list_volumes
-      servers = server_list_response.body[:servers]
-      volumes = volume_list_response.body[:volumes]
-
-      if volumes.empty?
-        created_volume = create_volume
-        volume_id  = created_volume.body[:volume][:id]
-      else
-        volume_id  = volumes[-1][:id]
-      end
-
-      if servers.empty?
-        created_server = create_server
-        server_id = created_server.body[:server][:id]
-      else
-        server_id = servers[-1][:id]
-      end
-      device     = '/dev/vdc'
-
-      # Un-comment to generate successful cassettes.
-      # sleep(10) # Sleep for 10 seconds to for the volume status to be available.
-
-      response = session.compute_service.request :attach_volume do |params|
-        params[:server_id]  = server_id
-        params[:volume_id]  = volume_id
-        params[:device]     = device
-      end
-      response
-    end
 
     validate_attr :anonymous? do
       klass.anonymous?.must_equal false
@@ -115,7 +84,7 @@ class Aviator::Test
 
 
     validate_attr :headers do
-      headers = { 'X-Auth-Token' => get_session_data.token }
+      headers = { 'X-Auth-Token' => get_session_data[:body][:access][:token][:id] }
 
       request = create_request
       request.headers.must_equal headers
@@ -137,10 +106,10 @@ class Aviator::Test
     end
 
     validate_attr :url do
-      service_spec = get_session_data[:catalog].find{|s| s[:type] == 'compute' }
-      server_id    = 'a6d2cdcb-test-test-test-0833c30e968e'
-      volume_id    = '56121be0-test-test-test-77e5c21449c5'
-      url          = "#{ service_spec[:endpoints].find{|a| a[:interface] == 'public'}[:url] }/servers/#{ server_id }/os-volume_attachments/#{ volume_id}"
+      compute_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'compute' }[:endpoints][0]['publicURL']
+      server_id   = 'a6d2cdcb-test-test-test-0833c30e968e'
+      volume_id   = '56121be0-test-test-test-77e5c21449c5'
+      url         = "#{ compute_url }/servers/#{ server_id }/os-volume_attachments/#{ volume_id}"
 
       request = create_request do |params|
         params[:server_id] = server_id
@@ -152,18 +121,26 @@ class Aviator::Test
 
 
     validate_response 'valid parameters are provided' do
-      attached_volume = attach_volume
-      server_id = attached_volume.body[:volumeAttachment][:serverId]
-      volume_id = attached_volume.body[:volumeAttachment][:volumeId]
+      server = helper.create_server(session).body[:server]
+      volume = helper.create_volume(session).body[:volume]
 
-      #sleep(10) # Sleep 10 seconds to wait for the volume to be attach.
+      response = session.compute_service.request :attach_volume, :api_version => :v2 do |params|
+        params[:server_id]  = server[:id]
+        params[:volume_id]  = volume[:id]
+        params[:device]     = '/dev/vdc'
+      end
 
-      response = session.compute_service.request :detach_volume do |params|
-        params[:server_id] = server_id
-        params[:volume_id] = volume_id
+      sleep 5 if VCR.current_cassette.recording?
+
+      response = session.compute_service.request :detach_volume, :api_version => :v2 do |params|
+        params[:server_id] = server[:id]
+        params[:volume_id] = volume[:id]
       end
 
       response.status.must_equal 202
+
+      helper.delete_volume(session, volume[:id])
+      helper.delete_server(session, server[:id])
     end
 
 
@@ -171,7 +148,7 @@ class Aviator::Test
       server_id = 'a6d2cdcb-test-test-test-0833c30e968e'
       volume_id = '56121be0-test-test-test-77e5c21449c5'
 
-      response = session.compute_service.request :detach_volume do |params|
+      response = session.compute_service.request :detach_volume, :api_version => :v2 do |params|
         params[:server_id] = server_id
         params[:volume_id] = volume_id
       end

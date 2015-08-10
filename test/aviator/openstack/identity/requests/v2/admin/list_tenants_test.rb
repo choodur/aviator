@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/requests/v2/admin/list_tenants' do
+  describe 'aviator/openstack/identity/requests/requests/v2/admin/list_tenants' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)
@@ -76,8 +76,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:body][:access][:serviceCatalog].find{|s| s[:type] == 'identity' }
-      url          = "#{ service_spec[:endpoints][0][:adminURL] }/tenants"
+      identity_url = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'identity' }[:endpoints][0]['adminURL']
+      url          = "#{ identity_url }/tenants"
       request      = klass.new(session_data)
 
       request.url.must_equal url
@@ -87,7 +87,7 @@ class Aviator::Test
     validate_response 'no parameters are provided' do
       service = session.identity_service
 
-      response = service.request :list_tenants
+    response = service.request :list_tenants, :api_version => :v2
 
       response.status.must_equal 200
       response.body.wont_be_nil
@@ -117,7 +117,7 @@ class Aviator::Test
 
       # base_url should have the form 'https://<domain>:<port>/<api_version>'
 
-      response = s.identity_service.request :list_tenants, :base_url => base_url.to_s
+      response = s.identity_service.request :list_tenants, :api_version => :v2, :base_url => base_url.to_s
 
       response.status.must_equal 200
       response.body.wont_be_nil

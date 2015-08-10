@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/v2/admin/list_users_for_a_tenant' do
+  describe 'aviator/openstack/identity/requests/v2/admin/list_users_for_a_tenant' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -65,7 +65,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -79,10 +79,11 @@ class Aviator::Test
 
 
     validate_attr :url do
-      tenant_id = 'sample_tenant_id'
+      tenant_id    = 'sample_tenant_id'
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'identity' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/tenants/#{ tenant_id }/users"
+      identity_url = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'identity' }[:endpoints][0]['adminURL']
+      url          = "#{ identity_url }/tenants/#{ tenant_id }/users"
+
       request = create_request do |p|
         p[:tenant_id] = tenant_id
       end
@@ -92,11 +93,9 @@ class Aviator::Test
 
 
     validate_response 'valid tenant id is provided' do
-      # must be hardcoded so as not to inadvertently alter random resources
-      # in case the corresponding cassette is deleted
-      tenant_id = '5797bb4fb10c416bb2fb6534d12bd34b'
+      tenant_id = session.identity_service.request(:list_tenants, :api_version => :v2).body[:tenants].first[:id]
 
-      response = session.identity_service.request :list_users_for_a_tenant do |params|
+      response = session.identity_service.request :list_users_for_a_tenant, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
       end
 
@@ -108,11 +107,9 @@ class Aviator::Test
 
 
     validate_response 'invalid tenant id is provided' do
-      # must be hardcoded so as not to inadvertently alter random resources
-      # in case the corresponding cassette is deleted
       tenant_id = 'abogustenantidthatdoesnotexist'
 
-      response = session.identity_service.request :list_users_for_a_tenant do |params|
+      response = session.identity_service.request :list_users_for_a_tenant, :api_version => :v2 do |params|
         params[:tenant_id] = tenant_id
       end
 

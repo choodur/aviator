@@ -26,7 +26,7 @@ module Aviator
     end
 
     def url
-      url = "#{ base_url }/images"
+      url = "#{ base_url }/v1/images"
       url << "/detail" if params[:details]
 
       filters = []

@@ -1,11 +1,3 @@
-# get_user
-# create_user
-# update_user
-# delete_user
-# delete_role_from_user_on_tenant
-# add_role_to_user_on_tenant
-# list_users_for_a_tenant
-# list_users
 module Aviator
 
   define_request :list_users, inherit: [:openstack, :common, :v3, :public, :base] do

@@ -72,6 +72,9 @@ module Aviator
           Pathname.new(__FILE__).join('..', '..', '..', 'lib', 'aviator').expand_path.join(*path)
         end
 
+        def boom
+          puts 'oh hi!'
+        end
       end
     end
   end

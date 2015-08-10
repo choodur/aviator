@@ -39,12 +39,11 @@ class Aviator::Test
     end
 
 
-
     validate_response 'parameters are provided' do
 
-      volume    = session.volume_service.request(:list_volumes).body['volumes'].first
+      volume = session.volume_service.request(:list_volumes, :api_version => :v1).body['volumes'].first
 
-      response = session.volume_service.request(:create_snapshot, api_version: :v2) do |params|
+      response = session.volume_service.request(:create_snapshot, :api_version => :v2) do |params|
         params[:name]         = 'Aviator Volume Test Snapshot Name'
         params[:description]  = 'Aviator Volume Test Description'
         params[:volume_id]    =  volume[:id]

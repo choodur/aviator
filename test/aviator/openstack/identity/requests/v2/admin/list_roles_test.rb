@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/v2/admin/list_roles' do
+  describe 'aviator/openstack/identity/requests/v2/admin/list_roles' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)
@@ -61,7 +61,7 @@ class Aviator::Test
     validate_attr :headers do
       session_data = get_session_data
 
-      headers = { 'X-Auth-Token' => session_data.token }
+      headers = { 'X-Auth-Token' => session_data[:body][:access][:token][:id] }
 
       request = create_request(session_data)
 
@@ -76,8 +76,8 @@ class Aviator::Test
 
     validate_attr :url do
       session_data = get_session_data
-      service_spec = session_data[:catalog].find{|s| s[:type] == 'identity' }
-      url          = "#{ service_spec[:endpoints].find{|e| e[:interface] == 'admin'}[:url] }/OS-KSADM/roles/"
+      identity_url = session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'identity' }[:endpoints][0]['adminURL']
+      url          = "#{ identity_url }/OS-KSADM/roles/"
       request      = klass.new(session_data)
 
       request.url.must_equal url
@@ -87,7 +87,7 @@ class Aviator::Test
     validate_response 'no parameters are provided' do
       service = session.identity_service
 
-      response = service.request :list_roles
+      response = service.request :list_roles, :api_version => :v2
 
       response.status.must_equal 200
       response.body.wont_be_nil
