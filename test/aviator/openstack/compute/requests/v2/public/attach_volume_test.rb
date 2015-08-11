@@ -114,7 +114,7 @@ class Aviator::Test
       volume = helper.create_volume(session).body[:volume]
       device = '/dev/xvdb'
 
-      response = session.compute_service.request :attach_volume do |params|
+      response = session.compute_service.request :attach_volume, :api_version => :v2 do |params|
         params[:server_id]  = server[:id]
         params[:volume_id]  = volume[:id]
         params[:device]     = device
@@ -132,7 +132,7 @@ class Aviator::Test
     validate_response 'invalid volumeId is provided' do
       volume_id = 'volumeDoesNotExist'
 
-      response = session.compute_service.request :attach_volume do |params|
+      response = session.compute_service.request :attach_volume, :api_version => :v2 do |params|
         params[:server_id]  = 'serverDoesNotExist'
         params[:volume_id]  = volume_id
         params[:device]     = '/dev/xvdb'
@@ -147,7 +147,7 @@ class Aviator::Test
     validate_response 'non existent server is provided' do
       volume = helper.create_volume(session).body[:volume]
 
-      response = session.compute_service.request :attach_volume do |params|
+      response = session.compute_service.request :attach_volume, :api_version => :v2 do |params|
         params[:server_id]  = 'serverDoesNotExist'
         params[:volume_id]  = volume[:id]
         params[:device]     = '/dev/xvdb'
@@ -165,7 +165,7 @@ class Aviator::Test
     validate_response 'non existent volume is provided' do
       server = helper.create_server(session).body[:server]
 
-      response = session.compute_service.request :attach_volume do |params|
+      response = session.compute_service.request :attach_volume, :api_version => :v2 do |params|
         params[:server_id]  = server[:id]
         params[:volume_id]  = '56121be0-1d25-1234-bb53-77e5c21449c5'
         params[:device]     = '/dev/xvdb'

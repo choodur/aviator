@@ -124,7 +124,7 @@ class Aviator::Test
         service_spec = session_data[:body][:access][:serviceCatalog].find{|s| s[:type] == service_name.to_s }
         version = service_spec[:endpoints][0][:publicURL].match(/(v\d+)\.?\d*/)[1].to_sym
 
-        request = modyul.find_request(service_name, request_name, session_data, {})
+        request = modyul.find_request(service_name, request_name, session_data, {:api_version => :v2})
 
         request.service.must_equal service_name
         request.api_version.must_equal version

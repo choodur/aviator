@@ -5,16 +5,16 @@ class Aviator::Test
   describe 'aviator/openstack/volume/requests/v1/public/list_volumes' do
 
 
-    def admin_session
-      unless @admin_session
-        @admin_session = Aviator::Session.new(
+    def session
+      unless @session
+        @session = Aviator::Session.new(
                      config_file: Environment.path,
                      environment: 'openstack_admin'
                    )
-        @admin_session.authenticate
+        @session.authenticate
       end
 
-      @admin_session
+      @session
     end
 
 
@@ -42,26 +42,12 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
-    end
-
-
-    def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
     def klass
       @klass ||= helper.load_request('openstack', 'volume', 'v1', 'public', 'list_volumes.rb')
-    end
-
-
-    def create_volume
-      member_session.volume_service.request :create_volume, :api_version => :v1 do |params|
-        params[:display_name]         = 'Aviator Volume Test Name'
-        params[:display_description]  = 'Aviator Volume Test Description'
-        params[:size]                 = '1'
-      end
     end
 
 
@@ -123,19 +109,20 @@ class Aviator::Test
 
     validate_response 'all_tenants param is true' do
       # Manually create the volumes in more than one tenant for now
+      volume = helper.create_volume(member_session).body[:volume]
+      control_response = session.volume_service.request :list_volumes, :api_version => :v1
 
-      control_response = admin_session.volume_service.request :list_volumes, :api_version => :v1
-
-      all_tenants_response = admin_session.volume_service.request :list_volumes, :api_version => :v1 do |params|
+      all_tenants_response = session.volume_service.request :list_volumes, :api_version => :v1 do |params|
         params[:all_tenants] = true
       end
 
       all_tenants_response.body[:volumes].length.must_be :>, control_response.body[:volumes].length
+      helper.delete_volume(session, volume[:id])
     end
 
 
     validate_response 'no parameters are provided' do
-      create_volume
+      volume = helper.create_volume(member_session).body[:volume]
 
       response = member_session.volume_service.request :list_volumes, :api_version => :v1
 
@@ -143,22 +130,25 @@ class Aviator::Test
       response.body.wont_be_nil
       response.body[:volumes].length.wont_equal 0
       response.headers.wont_be_nil
+
+      helper.delete_volume(session, volume[:id])
     end
 
 
     validate_response 'parameters are valid' do
-      create_volume
-      name = 'Aviator Volume Test Name'
+      volume = helper.create_volume(member_session).body[:volume]
 
       response = member_session.volume_service.request :list_volumes, :api_version => :v1 do |params|
         params[:details]      = true
-        params[:display_name] = name
+        params[:display_name] = volume[:name]
       end
 
       response.status.must_equal 200
       response.body.wont_be_nil
-      response.body[:volumes].select { |v| v[:display_name] == name }.wont_be_nil
+      response.body[:volumes].select { |v| v[:display_name] == volume[:name] }.wont_be_nil
       response.headers.wont_be_nil
+
+      helper.delete_volume(session, volume[:id])
     end
 
 

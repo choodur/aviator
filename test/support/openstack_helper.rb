@@ -53,8 +53,25 @@ module Aviator
           response
         end
 
+        def create_volume_snapshot(session, volume_id)
+          response = session.volume_service.request(:create_snapshot, :api_version => :v2) do |params|
+            params[:name]         = 'Aviator Volume Snapshot Name'
+            params[:description]  = 'Aviator Volume Snapshot Description'
+            params[:volume_id]    =  volume_id
+            params[:force]        =  true
+          end
+
+          sleep 5 if VCR.current_cassette.recording?
+
+          response
+        end
+
         def delete_floating_ip(session, id)
           session.compute_service.request(:delete_floating_ip, :api_version => :v2, :params => { :id => id })
+        end
+
+        def delete_keypair(session, name)
+          session.compute_service.request(:delete_keypair, :api_version => :v2, :params => { :keypair_name => name })
         end
 
         def delete_security_group(session, id)
@@ -62,13 +79,21 @@ module Aviator
         end
 
         def delete_server(session, id)
-          session.compute_service.request(:delete_server, :api_version => :v2, :params => { :id => id })
+          response = session.compute_service.request(:delete_server, :api_version => :v2, :params => { :id => id })
           sleep 10 if VCR.current_cassette.recording?
+          response
         end
 
         def delete_volume(session, id)
-          session.volume_service.request(:delete_volume, :api_version => :v1, :params => { :id => id })
+          response = session.volume_service.request(:delete_volume, :api_version => :v1, :params => { :id => id })
           sleep 10 if VCR.current_cassette.recording?
+          response
+        end
+
+        def delete_volume_snapshot(session, id)
+          response = session.volume_service.request(:delete_snapshot, :api_version => :v2, :params => { :id => id })
+          sleep 5 if VCR.current_cassette.recording?
+          response
         end
 
         def get_project(session, project)

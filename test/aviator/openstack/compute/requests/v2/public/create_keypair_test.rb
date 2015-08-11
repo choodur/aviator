@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/requests/requests/v2/public/create_keypair' do
+  describe 'aviator/openstack/compute/requests/v2/public/create_keypair' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -20,7 +20,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -107,21 +107,25 @@ class Aviator::Test
 
 
     validate_response 'valid parameters are provided' do
+      name = 'new-keypair'
+
       response = session.compute_service.request :create_keypair, :api_version => :v2 do |params|
-        params[:name] = 'new-keypair'
+        params[:name] = name
         params[:public_key] = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSEPMGA4D7oF4ObBb3vbufLmK2oKyJQu0Ol4fyGAS+X342prm7dvVF5lCxVrtXzADDkFZJF0TE+3mjgywzciH2dy9+z7E/YNdQpr4tXFWSrjAy+zi+Lw7s2QuScdg55/uSLiiuuTAI2Gfm4K+QxEiNRStdUqXS3p6v6PDfLwEOJwaOL639yR5Ivk+Nf3BG79OPcmCIkTw7yzQn54UHAZ7RoH/yrXQEUd4uOCA2Kwa3imP7TeIcvKl/h0EjgLK6Q/lI5diziCPVVheh1NMd0prcfu7HXz4W9dxlJaX8YDQwXT5YH+F0JE/D0pq3M/tQSw1dftz+E4FVjUqFWnnaxD/p bogus.rsa@key.com"
       end
 
       response.status.must_equal 200
       response.headers.wont_be_nil
       response.body['keypair'].wont_be_nil
+
+      helper.delete_keypair(session, name)
     end
 
 
     validate_response 'an invalid public key is provided' do
       response = session.compute_service.request :create_keypair, :api_version => :v2 do |params|
         params[:name] = 'invalid-public-key'
-        params[:public_key] = "invalid"
+        params[:public_key] = 'invalid'
       end
 
       response.status.must_equal 400

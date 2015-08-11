@@ -30,7 +30,7 @@ class Aviator::Test
     def host_name
       return @host_name unless @host_name.nil?
 
-      response   = session.compute_service.request(:list_hosts)
+      response   = session.compute_service.request(:list_hosts, :api_version => :v2)
       @host_name = response.body[:hosts].last[:host_name]
     end
 
@@ -105,10 +105,10 @@ class Aviator::Test
     validate_response 'valid ID params is provided' do
       service = session.compute_service
 
-      list_response = service.request :list_security_groups
+      list_response = service.request :list_security_groups, :api_version => :v2
       sec_id = list_response.body[:security_groups].first[:id]
 
-      response = service.request :get_security_group do |params|
+      response = service.request :get_security_group, :api_version => :v2 do |params|
         params[:security_group_id] = sec_id
       end
 
@@ -123,7 +123,7 @@ class Aviator::Test
     validate_response 'invalid ID params is provided' do
       service = session.compute_service
 
-      response = service.request :get_security_group do |params|
+      response = service.request :get_security_group, :api_version => :v2 do |params|
         params[:security_group_id] = 'invalidStringID'
       end
 

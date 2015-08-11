@@ -5,8 +5,6 @@ class Aviator::Test
 
   describe 'aviator/openstack/identity/requests/v2/admin/get_user' do
 
-
-
     def create_request(session_data = get_session_data)
       klass.new(session_data) do |p|
         p[:id] = get_user_id

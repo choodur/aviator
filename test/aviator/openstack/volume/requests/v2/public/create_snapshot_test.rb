@@ -2,14 +2,14 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v2/public/create_snapshot' do
+  describe 'aviator/openstack/volume/requests/v2/public/create_snapshot' do
 
     def get_session_data
       session.send :auth_response
     end
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
     def klass
@@ -40,17 +40,20 @@ class Aviator::Test
 
 
     validate_response 'parameters are provided' do
-
-      volume = session.volume_service.request(:list_volumes, :api_version => :v1).body['volumes'].first
+      volume = helper.create_volume(session).body[:volume]
 
       response = session.volume_service.request(:create_snapshot, :api_version => :v2) do |params|
         params[:name]         = 'Aviator Volume Test Snapshot Name'
         params[:description]  = 'Aviator Volume Test Description'
-        params[:volume_id]    =  volume[:id]
+        params[:volume_id]    = volume[:id]
         params[:force]        = true
       end
 
       response.status.must_equal 202
+
+      sleep 10 if VCR.current_cassette.recording?
+      helper.delete_volume_snapshot(session, response.body[:snapshot][:id])
+      helper.delete_volume(session, volume[:id])
     end
 
   end

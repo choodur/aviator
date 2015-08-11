@@ -5,31 +5,12 @@ class Aviator::Test
 
   describe 'aviator/openstack/volume/requests/v2/public/update_snapshot' do
 
-    def create_snapshot
-      response = session.volume_service.request(:create_volume, :api_version => :v1) do |params|
-        params[:display_name]         = 'Volume for Update Snapshot'
-        params[:display_description]  = 'Volume for Update Snapshot Description'
-        params[:size]                 = '1'
-      end
-      @volume = response.body[:volume]
-
-      response = session.volume_service.request(:create_snapshot, :api_version => :v2) do |params|
-        params[:name]         = 'Snapshot for Update Test'
-        params[:description]  = 'Snapshot for Update Test Description'
-        params[:volume_id]    =  @volume[:id]
-        params[:force]        =  true
-      end
-
-      sleep 5 if VCR.current_cassette.recording?
-      response.body[:snapshot]
-    end
-
     def get_session_data
       session.send :auth_response
     end
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
     def klass
@@ -60,12 +41,10 @@ class Aviator::Test
 
 
     validate_response 'parameters are provided' do
-      snapshot = create_snapshot
+      volume   = helper.create_volume(session).body[:volume]
+      snapshot = helper.create_volume_snapshot(session, volume[:id]).body[:snapshot]
+      snapshot_name = 'Updated Snapshot Name'
 
-      snapshot.wont_be_empty
-
-      snapshot_name = "Updated Snapshot Name"
-      #update snapshot
       response = session.volume_service.request(:update_snapshot, :api_version => :v2) do |params|
         params[:snapshot_id] = snapshot[:id]
         params[:name] = snapshot_name
@@ -75,16 +54,8 @@ class Aviator::Test
       response.body[:snapshot].wont_be_nil
       response.body[:snapshot][:name].must_equal snapshot_name
 
-      #delete snapshot
-      response = session.volume_service.request(:delete_snapshot, :api_version => :v2) do |params|
-        params[:snapshot_id] = snapshot[:id]
-      end
-
-      sleep 5 if VCR.current_cassette.recording?
-      #delete volume
-      response = session.volume_service.request(:delete_volume, :api_version => :v1) do |params|
-        params[:id] = @volume[:id]
-      end
+      helper.delete_volume_snapshot(session, snapshot[:id])
+      helper.delete_volume(session, volume[:id])
     end
 
   end

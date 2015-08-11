@@ -15,7 +15,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -96,23 +96,23 @@ class Aviator::Test
 
 
     validate_response 'no parameter is provided' do
-      response = session.compute_service.request :create_floating_ip
+      response = session.compute_service.request :create_floating_ip, :api_version => :v2
 
       response.status.must_equal 200
       response.headers.wont_be_nil
       response.body[:floating_ip][:pool].must_equal "public"
+      helper.delete_floating_ip(session, response.body[:floating_ip][:id])
     end
 
 
     validate_response 'pool with no more floating IPs is provided' do
-      response = session.compute_service.request :create_floating_ip do |params|
+      response = session.compute_service.request :create_floating_ip, :api_version => :v2 do |params|
         params[:pool] = "nova"
       end
 
       response.status.must_equal 404
       response.headers.wont_be_nil
     end
-
 
   end
 

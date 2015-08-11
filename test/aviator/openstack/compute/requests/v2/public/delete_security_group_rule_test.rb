@@ -98,10 +98,10 @@ class Aviator::Test
 
 
     validate_response 'valid security group rule id is provided' do
-      sec_group_id = session.compute_service.request(:list_security_groups)
+      sec_group_id = session.compute_service.request(:list_security_groups, :api_version => :v2)
                       .body[:security_groups].first[:id]
 
-      rule_response = session.compute_service.request :create_security_group_rule do |params|
+      rule_response = session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = 'TCP'
         params[:from_port]        = '50'
         params[:to_port]          = '50'
@@ -109,7 +109,7 @@ class Aviator::Test
         params[:parent_group_id]  = sec_group_id
       end
 
-      response = session.compute_service.request :delete_security_group_rule do |params|
+      response = session.compute_service.request :delete_security_group_rule, :api_version => :v2 do |params|
         params[:id] = rule_response.body[:security_group_rule][:id]
       end
 
@@ -121,7 +121,7 @@ class Aviator::Test
     validate_response 'invalid security group rule id is provided' do
       rule_id = 'stringyid'
 
-      response = session.compute_service.request :delete_security_group_rule do |params|
+      response = session.compute_service.request :delete_security_group_rule, :api_version => :v2 do |params|
         params[:id] = rule_id
       end
 
@@ -133,7 +133,7 @@ class Aviator::Test
     validate_response 'non existent security group rule id is provided' do
       rule_id = 0
 
-      response = session.compute_service.request :delete_security_group_rule do |params|
+      response = session.compute_service.request :delete_security_group_rule, :api_version => :v2 do |params|
         params[:id] = rule_id
       end
 

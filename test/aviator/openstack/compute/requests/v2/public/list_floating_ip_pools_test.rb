@@ -85,7 +85,7 @@ class Aviator::Test
 
 
     validate_response 'no parameters are provided' do
-      response = session.compute_service.request :list_floating_ip_pools
+      response = session.compute_service.request :list_floating_ip_pools, :api_version => :v2
 
       response.status.must_equal 200
       response.body.wont_be_nil

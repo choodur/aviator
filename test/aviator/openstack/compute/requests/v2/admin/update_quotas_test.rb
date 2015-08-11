@@ -126,7 +126,7 @@ class Aviator::Test
     Aviator::Test::RequestHelper.load_request('openstack', 'compute', 'v2', 'admin', 'update_quotas.rb')
       .optional_params.each do |param|
       validate_response "valid #{param} params is provided" do
-        value = 10
+        value = 1000
 
         response = session.compute_service.request :update_quotas, :api_version => :v2 do |params|
           params[:tenant_id]  = tenant_id
@@ -155,6 +155,12 @@ class Aviator::Test
         response.body.wont_be_nil
         response.body[:badRequest].wont_be_nil
         response.headers.wont_be_nil
+
+        # restore usable values
+        response = session.compute_service.request :update_quotas, :api_version => :v2 do |params|
+          params[:tenant_id]  = tenant_id
+          params[param]       = 1000
+        end
       end
     end
 

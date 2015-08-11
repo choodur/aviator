@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v2/admin/delete_volume_type' do
+  describe 'aviator/openstack/volume/requests/v2/admin/delete_volume_type' do
 
     def create_volume_type
       response = session.volume_service.request :create_volume_type, :api_version => :v2 do |params|

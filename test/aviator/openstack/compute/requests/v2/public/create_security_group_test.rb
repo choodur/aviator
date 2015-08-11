@@ -89,7 +89,7 @@ class Aviator::Test
       sec_name = "security group name"
       sec_desc = "security group description"
 
-      response = session.compute_service.request :create_security_group do |params|
+      response = session.compute_service.request :create_security_group, :api_version => :v2 do |params|
         params[:name]        = sec_name
         params[:description] = sec_desc
       end

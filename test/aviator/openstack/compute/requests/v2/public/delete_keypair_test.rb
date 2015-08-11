@@ -74,17 +74,17 @@ class Aviator::Test
     end
 
     validate_response 'valid parameters are provided' do
-      session.compute_service.request :create_or_import_keypair do |params|
+      session.compute_service.request :create_or_import_keypair, :api_version => :v2 do |params|
         params[:name] = "keypair to delete"
       end
 
-      response = session.compute_service.request :delete_keypair do |params|
+      response = session.compute_service.request :delete_keypair, :api_version => :v2 do |params|
         params[:keypair_name] = "keypair to delete"
       end
 
       response.status.must_equal 202
 
-      response = session.compute_service.request :list_keypairs
+      response = session.compute_service.request :list_keypairs, :api_version => :v2
       names = response.body[:keypairs].collect { |k| k[:name] }
 
       names.include?("keypair to delete").must_equal false

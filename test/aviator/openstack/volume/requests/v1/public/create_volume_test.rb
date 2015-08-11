@@ -6,9 +6,9 @@ class Aviator::Test
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
-        params[:display_name]         = 'Aviator Volume Test Name'
-        params[:display_description]  = 'Aviator Volume Test Description'
-        params[:size]                 = '1'
+        params[:display_name]        = 'Aviator Create Volume Name'
+        params[:display_description] = 'Aviator Create Volume Description'
+        params[:size]                = 1
       end
 
       klass.new(session_data, &block)
@@ -21,7 +21,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -102,8 +102,7 @@ class Aviator::Test
     validate_attr :url do
       volume_url = get_session_data[:body][:access][:serviceCatalog].find { |s| s[:type] == 'volume' }[:endpoints][0]['publicURL']
       url        = "#{ volume_url }/volumes"
-
-      request = create_request
+      request    = create_request
 
       request.url.must_equal url
     end
@@ -119,6 +118,8 @@ class Aviator::Test
       response.body.wont_be_nil
       response.body[:volume].wont_be_nil
       response.headers.wont_be_nil
+
+      helper.delete_volume(session, response.body[:volume][:id])
     end
 
   end

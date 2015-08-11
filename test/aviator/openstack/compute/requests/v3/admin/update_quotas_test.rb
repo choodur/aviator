@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/v3/admin/update_quotas' do
+  describe 'aviator/openstack/compute/requests/v3/admin/update_quotas' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -133,7 +133,7 @@ class Aviator::Test
       .optional_params.each do |param|
       next if param == :force
       validate_response "valid #{param} params is provided" do
-        value   = 10
+        value   = 1000
         tenant  = tenant_id
 
         response = session.compute_service.request :update_quotas, :api_version => :v3 do |params|
@@ -165,6 +165,12 @@ class Aviator::Test
         response.body.wont_be_nil
         response.body[:badRequest].wont_be_nil
         response.headers.wont_be_nil
+
+        # restore usable values
+        response = session.compute_service.request :update_quotas, :api_version => :v3 do |params|
+          params[:tenant_id]  = tenant
+          params[param]       = 1000
+        end
       end
     end
 

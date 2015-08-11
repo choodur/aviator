@@ -64,9 +64,13 @@ class Aviator::Test
         session     = new_session
         credentials = config.openstack_admin[:auth_credentials]
 
-        session.authenticate do |c|
-          c[:username] = 'invalidusername'
-          c[:password] = 'm@!@#$%^&*'
+        begin
+          session.authenticate do |c|
+            c[:username] = 'invalidusername'
+            c[:password] = 'm@!@#$%^&*'
+          end
+        rescue Aviator::Session::AuthenticationError
+          nil
         end
 
         filtered   = false
@@ -80,7 +84,7 @@ class Aviator::Test
           filtered = true
         end
 
-        #special characters password must not be in aviator.log
+        # special characters password must not be in aviator.log
         unfiltered.must_equal false
 
         #FILTERED_VALUE must be seen instead of the password

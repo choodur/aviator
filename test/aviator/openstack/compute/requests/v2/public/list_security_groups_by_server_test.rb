@@ -14,7 +14,7 @@ class Aviator::Test
     end
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
     def klass
@@ -85,7 +85,7 @@ class Aviator::Test
     end
 
     validate_response 'invalid parameters are provided' do
-      response = session.compute_service.request :list_security_groups_by_server do |params|
+      response = session.compute_service.request :list_security_groups_by_server, :api_version => :v2 do |params|
         params[:server_id] = "xxx"
       end
 
@@ -95,23 +95,18 @@ class Aviator::Test
     end
 
     validate_response 'valid parameters are provided' do
-      image_id  = session.image_service.request(:list_public_images).body[:images].first[:id]
-      flavor_id = session.compute_service.request(:list_flavors).body[:flavors].first[:id]
+      server = helper.create_server(session).body[:server]
 
-      server_response = session.compute_service.request :create_server do |params|
-        params[:imageRef]  = image_id
-        params[:flavorRef] = flavor_id
-        params[:name] = 'Aviator Server Sec'
-      end
-
-      response = session.compute_service.request :list_security_groups_by_server do |params|
-        params[:server_id] = server_response.body[:server][:id]
+      response = session.compute_service.request :list_security_groups_by_server, :api_version => :v2 do |params|
+        params[:server_id] = server[:id]
       end
 
       response.status.must_equal 200
       response.body.wont_be_nil
       response.headers.wont_be_nil
       response.body[:security_groups].length.wont_equal 0
+
+      helper.delete_server(session, server[:id])
     end
   end
 end

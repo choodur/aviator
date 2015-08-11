@@ -9,7 +9,7 @@ class Aviator::Test
     end
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
     def klass
@@ -38,21 +38,11 @@ class Aviator::Test
     end
 
     validate_response 'parameters are provided' do
-
-      create_volume = session.volume_service.request(:create_volume, :api_version => :v1) do |p|
-        p.display_name        = 'upload-to-image-test'
-        p.display_description = 'upload-to-image-test'
-        p.size                = 1
-      end
-
-      volume_id  = create_volume.body['volume']['id']
+      volume = helper.create_volume(session).body[:volume]
       image_name = 'upload-to-image-test'
 
-      # wait, else "Invalid volume: Volume status must be available/in-use."
-      sleep 10 if VCR.current_cassette.recording?
-
       response = session.volume_service.request(:upload_to_image, :api_version => :v2) do |p|
-        p.volume_id  = volume_id
+        p.volume_id  = volume[:id]
         p.image_name = image_name
         p.force      = 'True'
       end
@@ -65,7 +55,7 @@ class Aviator::Test
 
       sleep 10 if VCR.current_cassette.recording?
       session.compute_service.request(:delete_image, :api_version => :v2) { |p| p.id = os_image['image_id'] }
-      session.volume_service.request(:delete_volume, :api_version => :v1) { |p| p.id = volume_id }
+      helper.delete_volume(session, volume[:id])
     end
 
   end

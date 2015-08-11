@@ -101,7 +101,7 @@ class Aviator::Test
 
       sec_group = helper.create_security_group(session).body[:security_group]
 
-      response = session.compute_service.request :create_security_group_rule do |params|
+      response = session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = 'TCP'
         params[:from_port]        = '6555'
         params[:to_port]          = '6555'
@@ -121,7 +121,7 @@ class Aviator::Test
     validate_response 'existing rule parameters are provided' do
       sec_group = helper.create_security_group(session).body[:security_group]
 
-      session.compute_service.request :create_security_group_rule do |params|
+      session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = 'TCP'
         params[:from_port]        = '6789'
         params[:to_port]          = '6789'
@@ -132,7 +132,7 @@ class Aviator::Test
       sec_group     = helper.get_security_group(session, sec_group[:id]).body[:security_group]
       existing_rule = sec_group[:rules].first
 
-      response = session.compute_service.request :create_security_group_rule do |params|
+      response = session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = existing_rule[:ip_protocol]
         params[:from_port]        = existing_rule[:from_port]
         params[:to_port]          = existing_rule[:to_port]
@@ -153,7 +153,7 @@ class Aviator::Test
       invalid_protocol = 'XXX'
       sec_group = helper.create_security_group(session).body[:security_group]
 
-      response = session.compute_service.request :create_security_group_rule do |params|
+      response = session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = invalid_protocol
         params[:from_port]        = '6789'
         params[:to_port]          = '6789'
@@ -174,7 +174,7 @@ class Aviator::Test
       invalid_cidr = 'malformedinvalid~!'
       sec_group = helper.create_security_group(session).body[:security_group]
 
-      response = session.compute_service.request :create_security_group_rule do |params|
+      response = session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = 'TCP'
         params[:from_port]        = '6789'
         params[:to_port]          = '6789'
@@ -196,7 +196,7 @@ class Aviator::Test
       to_port   = 30
       sec_group = helper.create_security_group(session).body[:security_group]
 
-      response = session.compute_service.request :create_security_group_rule do |params|
+      response = session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = 'TCP'
         params[:from_port]        = from_port
         params[:to_port]          = to_port
@@ -218,7 +218,7 @@ class Aviator::Test
       to_port   = 65536
       sec_group = helper.create_security_group(session).body[:security_group]
 
-      response = session.compute_service.request :create_security_group_rule do |params|
+      response = session.compute_service.request :create_security_group_rule, :api_version => :v2 do |params|
         params[:ip_protocol]      = 'TCP'
         params[:from_port]        = from_port
         params[:to_port]          = to_port

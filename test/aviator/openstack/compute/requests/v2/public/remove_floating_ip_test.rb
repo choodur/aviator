@@ -19,7 +19,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -105,26 +105,22 @@ class Aviator::Test
 
 
     validate_response 'valid parameters are provided' do
-      session.compute_service.request :create_floating_ip
+      fip        = helper.create_floating_ip(session).body[:floating_ip]
+      server     = helper.create_server(session).body[:server]
+      ip_address = fip[:ip]
 
-      server_list_response  = session.compute_service.request :list_servers
-      ip_list_response      = session.compute_service.request :list_floating_ips
-
-      server_id  = server_list_response.body[:servers][-1][:id]
-      ip_address = ip_list_response.body[:floating_ips][-1][:ip]
-
-      session.compute_service.request :add_floating_ip do |params|
-        params[:server_id]  = server_id
+      session.compute_service.request :add_floating_ip, :api_version => :v2 do |params|
+        params[:server_id]  = server[:id]
         params[:address]    = ip_address
       end
 
-      response = session.compute_service.request :remove_floating_ip do |params|
-        params[:server_id]  = server_id
+      response = session.compute_service.request :remove_floating_ip, :api_version => :v2 do |params|
+        params[:server_id]  = server[:id]
         params[:address]    = ip_address
       end
 
-      server_get_response = session.compute_service.request :get_server do |p|
-        p[:id] = server_id
+      server_get_response = session.compute_service.request :get_server, :api_version => :v2 do |p|
+        p[:id] = server[:id]
       end
 
       get_body = server_get_response.body
@@ -136,15 +132,18 @@ class Aviator::Test
       get_body.wont_be_nil
       get_body[:server][:addresses][:private]
           .map{|a| a[:addr] == ip_address && a["OS-EXT-IPS:type"] == "floating"}.wont_include true
+
+      helper.delete_floating_ip(session, fip[:id])
+      helper.delete_server(session, server[:id])
     end
 
 
     validate_response 'non existent server is provided' do
-      ip_list_response = session.compute_service.request :list_floating_ips
-      ip_address       = ip_list_response.body[:floating_ips][-1][:ip]
-      server_id        = 'server1doesntexist'
+      fip        = helper.create_floating_ip(session).body[:floating_ip]
+      ip_address = fip[:ip]
+      server_id  = 'server1doesntexist'
 
-      response = session.compute_service.request :remove_floating_ip do |params|
+      response = session.compute_service.request :remove_floating_ip, :api_version => :v2 do |params|
         params[:server_id]  = server_id
         params[:address]    = ip_address
       end
@@ -153,14 +152,16 @@ class Aviator::Test
       response.headers.wont_be_nil
       response.body["computeFault"].wont_be_nil
       response.body["computeFault"]["message"].must_equal "Floating ip #{ ip_address } is not associated with instance #{ server_id }."
+
+      helper.delete_floating_ip(session, fip[:id])
     end
 
 
     validate_response 'non existent IP address is provided' do
-      list_response = session.compute_service.request :list_servers
+      server = helper.create_server(session).body[:server]
 
-      response = session.compute_service.request :remove_floating_ip do |params|
-        params[:server_id]  = list_response.body[:servers].first[:id]
+      response = session.compute_service.request :remove_floating_ip, :api_version => :v2 do |params|
+        params[:server_id]  = server[:id]
         params[:address]    = '0.0.0.1.95.9'
       end
 
@@ -168,6 +169,8 @@ class Aviator::Test
       response.headers.wont_be_nil
       response.body["itemNotFound"].wont_be_nil
       response.body["itemNotFound"]["message"].must_equal "floating ip not found"
+
+      helper.delete_server(session, server[:id])
     end
 
 

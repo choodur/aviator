@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v2/public/get_volume_type' do
+  describe 'aviator/openstack/volume/requests/v2/public/get_volume_type' do
 
     def get_session_data
       session.send :auth_response

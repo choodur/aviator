@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/requests/requests/v2/public/create_token' do
+  describe 'aviator/openstack/identity/requests/v2/public/create_token' do
 
     def create_request
       klass.new(helper.admin_bootstrap_session_data) do |params|

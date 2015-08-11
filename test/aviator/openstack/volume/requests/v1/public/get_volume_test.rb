@@ -31,20 +31,12 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
     def klass
       @klass ||= helper.load_request('openstack', 'volume', 'v1', 'public', 'get_volume.rb')
-    end
-
-    def create_volume
-      session.volume_service.request :create_volume, :api_version => :v1 do |params|
-        params[:display_name]         = 'Aviator Volume Test Name'
-        params[:display_description]  = 'Aviator Volume Test Description'
-        params[:size]                 = '1'
-      end
     end
 
 
@@ -109,20 +101,19 @@ class Aviator::Test
 
 
     validate_response 'a valid volume id is provided' do
-
-      create_volume
-
-      volume_id = session.volume_service.request(:list_volumes, :api_version => :v1).body['volumes'].first['id']
+      volume = helper.create_volume(session).body[:volume]
 
       response = session.volume_service.request :get_volume, :api_version => :v1 do |params|
-        params[:id] = volume_id
+        params[:id] = volume[:id]
       end
 
       response.status.must_equal 200
       response.body.wont_be_nil
       response.body[:volume].wont_be_nil
-      response.body[:volume][:id].must_equal volume_id
+      response.body[:volume][:id].must_equal volume[:id]
       response.headers.wont_be_nil
+
+      helper.delete_volume(session, volume[:id])
     end
 
     validate_response 'an invalid volume id is provided' do

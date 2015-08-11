@@ -81,7 +81,7 @@ class Aviator::Test
     end
 
     validate_response 'no parameters are provided' do
-      response = session.compute_service.request :list_security_groups
+      response = session.compute_service.request :list_security_groups, :api_version => :v2
 
       response.status.must_equal 200
       response.body.wont_be_nil

@@ -114,15 +114,15 @@ class Aviator::Test
 
 
     validate_response 'valid params are provided' do
-      image = session.image_service.request(:list_public_images).body[:images].first
-      updated_name = image[:name] << "aviatorImageOS"
+      image = session.image_service.request(:list_public_images, :api_version => :v1).body[:images].first
+      updated_name = image[:name].to_s << "aviatorImageOS"
 
-      response = session.image_service.request :update_image do |params|
+      response = session.image_service.request :update_image, :api_version => :v1 do |params|
         params[:id]   = image[:id]
         params[:name] = updated_name
       end
 
-      details_response = session.compute_service.request :get_image_details do |params|
+      details_response = session.compute_service.request :get_image_details, :api_version => :v2 do |params|
         params[:id] = image[:id]
       end
 
@@ -140,7 +140,7 @@ class Aviator::Test
 
 
     validate_response 'invalid id parameter is provided' do
-      response = session.image_service.request(:update_image) do |params|
+      response = session.image_service.request(:update_image, :api_version => :v1) do |params|
         params[:id] = 'bogus-nonexistent-id'
       end
 

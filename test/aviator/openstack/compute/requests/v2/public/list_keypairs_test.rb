@@ -13,7 +13,7 @@ class Aviator::Test
     end
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
     def klass
@@ -81,22 +81,25 @@ class Aviator::Test
     end
 
     validate_response 'no parameters are provided' do
-      service  = session.compute_service
+      service = session.compute_service
+      name = 'keypair name'
 
-      response = service.request :list_keypairs
+      response = service.request :list_keypairs, :api_version => :v2
       response.status.must_equal 200
       response.body.wont_be_nil
 
       # create keypair
-      service.request :create_or_import_keypair do |params|
-        params[:name] = "keypair name"
+      service.request :create_or_import_keypair, :api_version => :v2 do |params|
+        params[:name] = name
       end
 
-      response = service.request :list_keypairs
+      response = service.request :list_keypairs, :api_version => :v2
       response.status.must_equal 200
       response.body.wont_be_nil
       response.body[:keypairs].length.wont_equal 0
       response.headers.wont_be_nil
+
+      helper.delete_keypair(session, name)
     end
   end
 end

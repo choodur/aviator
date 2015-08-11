@@ -103,10 +103,10 @@ class Aviator::Test
 
 
     validate_response 'valid params are provided' do
-      session.compute_service.request(:create_floating_ip)
-      floating_ip = session.compute_service.request(:list_floating_ips).body[:floating_ips].first
+      session.compute_service.request(:create_floating_ip, :api_version => :v2)
+      floating_ip = session.compute_service.request(:list_floating_ips, :api_version => :v2).body[:floating_ips].first
 
-      response = session.compute_service.request :delete_floating_ip do |params|
+      response = session.compute_service.request :delete_floating_ip, :api_version => :v2 do |params|
         params[:id] = floating_ip[:id]
       end
 
@@ -119,7 +119,7 @@ class Aviator::Test
     validate_response 'invalid params are provided' do
       floating_ip_id = 'bogus_floating_ip_id'
 
-      response = session.compute_service.request :delete_floating_ip do |params|
+      response = session.compute_service.request :delete_floating_ip, :api_version => :v2 do |params|
         params[:id] = floating_ip_id
       end
 

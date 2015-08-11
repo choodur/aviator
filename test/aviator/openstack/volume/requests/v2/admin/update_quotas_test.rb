@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v2/admin/update_quotas' do
+  describe 'aviator/openstack/volume/requests/v2/admin/update_quotas' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|
@@ -156,6 +156,12 @@ class Aviator::Test
         response.body[:quota_set].wont_be_nil
         response.body[:quota_set][param].must_equal 0
         response.headers.wont_be_nil
+
+        # restore values
+        response = session.volume_service.request(:update_quotas, :api_version => :v2) do |params|
+          params[:tenant_id]  = tenant
+          params[param]       = 100
+        end
       end
     end
 

@@ -39,27 +39,6 @@ class Aviator::Test
       @session
     end
 
-    def create_server
-      image_id  = session.compute_service.request(:list_images).body[:images].first[:id]
-      flavor_id = session.compute_service.request(:list_flavors).body[:flavors].first[:id]
-
-      response = session.compute_service.request :create_server do |params|
-        params[:imageRef]  = image_id
-        params[:flavorRef] = flavor_id
-        params[:name] = 'Aviator Server'
-      end
-      response
-    end
-
-    def create_volume
-      response = session.volume_service.request :create_volume do |params|
-        params[:display_name]         = 'Aviator Volume Test Name'
-        params[:display_description]  = 'Aviator Volume Test Description'
-        params[:size]                 = '1'
-      end
-      response
-    end
-
 
     validate_attr :anonymous? do
       klass.anonymous?.must_equal false

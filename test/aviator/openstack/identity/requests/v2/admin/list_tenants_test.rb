@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/identity/requests/requests/v2/admin/list_tenants' do
+  describe 'aviator/openstack/identity/requests/v2/admin/list_tenants' do
 
     def create_request(session_data = get_session_data, &block)
       klass.new(session_data, &block)

@@ -60,7 +60,7 @@ class Aviator::Test
 
         s = service(default_session_data)
 
-        response = s.request :list_tenants
+        response = s.request :list_tenants, :api_version => :v2
 
         response.status.must_equal 200
       end

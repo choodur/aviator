@@ -16,7 +16,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -37,28 +37,14 @@ class Aviator::Test
       @session
     end
 
-    def create_server
-      nova = session.compute_service
-      image = nova.request(:list_images).body[:images].first
-      flavor = nova.request(:list_flavors).body[:flavors].first
-
-      response = nova.request(:create_server) do |p|
-        p[:imageRef] = image[:id]
-        p[:flavorRef] = flavor[:id]
-        p[:name] = 'server name'
-      end
-
-      response.body[:server]
-    end
-
     def stop_server(id)
-      session.compute_service.request(:stop_server) do |p|
+      session.compute_service.request(:stop_server, :api_version => :v2) do |p|
         p[:id] = id
       end
     end
 
     def get_server_by_state(id, state)
-      response = session.compute_service.request(:get_server) do |p|
+      response = session.compute_service.request(:get_server, :api_version => :v2) do |p|
         p[:id] = id
       end
 
@@ -130,24 +116,26 @@ class Aviator::Test
     validate_response 'valid params are provided' do
       service = session.compute_service
 
-      server_id = create_server[:id]
+      server_id = helper.create_server(session).body[:server][:id]
       server = get_server_by_state(server_id, 'active')
 
       stop_server(server_id)
       server = get_server_by_state(server_id, 'shutoff')
 
-      response = service.request :start_server do |params|
+      response = service.request :start_server, :api_version => :v2 do |params|
         params[:id] = server[:id]
       end
 
       response.status.must_equal 202
       response.headers.wont_be_nil
+
+      helper.delete_server(session, server_id)
     end
 
     validate_response 'invalid server id is provided' do
       server_id = 'abogusserveridthatdoesnotexist'
 
-      response = session.compute_service.request :start_server do |params|
+      response = session.compute_service.request :start_server, :api_version => :v2 do |params|
         params[:id] = server_id
       end
 

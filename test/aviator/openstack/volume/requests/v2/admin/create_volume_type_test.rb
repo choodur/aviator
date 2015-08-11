@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/volume/v2/admin/create_volume_type' do
+  describe 'aviator/openstack/volume/requests/v2/admin/create_volume_type' do
 
     def create_request(session_data = get_session_data, &block)
       block ||= lambda do |params|

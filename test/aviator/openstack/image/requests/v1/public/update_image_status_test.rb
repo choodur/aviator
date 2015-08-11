@@ -99,12 +99,12 @@ class Aviator::Test
     end
 
     validate_response 'valid params are provided' do
-      response = session.image_service.request(:create_image)
+      response = session.image_service.request(:create_image, :api_version => :v1)
       os_image = response.body[:image]
 
       os_image[:status].must_equal 'queued'
 
-      response = session.image_service.request :update_image_status do |params|
+      response = session.image_service.request :update_image_status, :api_version => :v1 do |params|
         params[:id] = os_image[:id]
         params[:status] = 'active'
       end
@@ -115,7 +115,7 @@ class Aviator::Test
       response.body[:image].wont_be_nil
       response.body[:image][:status].must_equal 'active'
 
-      details_response = session.compute_service.request :get_image_details do |params|
+      details_response = session.compute_service.request :get_image_details, :api_version => :v2 do |params|
         params[:id] = os_image[:id]
       end
 
@@ -124,7 +124,7 @@ class Aviator::Test
       details_response.body.wont_be_nil
       details_response.body[:image][:status].downcase.must_equal 'active'
 
-      session.compute_service.request(:delete_image) do |params|
+      session.compute_service.request(:delete_image, :api_version => :v2) do |params|
         params.id = os_image[:id]
       end
     end
@@ -135,14 +135,14 @@ class Aviator::Test
 
       os_image[:status].must_equal 'queued'
 
-      response = session.image_service.request :update_image_status do |params|
+      response = session.image_service.request :update_image_status, :api_version => :v1 do |params|
         params[:id] = os_image[:id]
         params[:status] = 'bogus-status'
       end
 
       response.status.must_equal 400
 
-      details_response = session.compute_service.request :get_image_details do |params|
+      details_response = session.compute_service.request :get_image_details, :api_version => :v2 do |params|
         params[:id] = os_image[:id]
       end
 
@@ -151,13 +151,13 @@ class Aviator::Test
       details_response.body.wont_be_nil
       details_response.body[:image][:status].wont_equal 'bogus-status'
 
-      session.compute_service.request(:delete_image) do |params|
+      session.compute_service.request(:delete_image, :api_version => :v2) do |params|
         params.id = os_image[:id]
       end
     end
 
     validate_response 'invalid id parameter is provided' do
-      response = session.image_service.request(:update_image_status) do |params|
+      response = session.image_service.request(:update_image_status, :api_version => :v1) do |params|
         params[:id] = 'bogus-nonexistent-id'
         params[:status] = 'queued'
       end

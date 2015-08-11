@@ -16,7 +16,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -99,12 +99,11 @@ class Aviator::Test
     end
 
     validate_response 'valid volume id is provided' do
-      volume    = session.volume_service.request(:list_volumes, :api_version => :v1).body[:volumes].first
-      volume_id = volume[:id]
-      new_name  = 'Aviator Test Update Volume'
+      volume = helper.create_volume(session).body[:volume]
+      new_name = 'Aviator Test Update Volume'
 
       response = session.volume_service.request :update_volume, :api_version => :v1 do |params|
-        params[:id]           = volume_id
+        params[:id]           = volume[:id]
         params[:display_name] = new_name
       end
 
@@ -113,31 +112,26 @@ class Aviator::Test
       response.body[:volume].wont_be_nil
       response.body[:volume][:display_name].must_equal new_name
       response.headers.wont_be_nil
+
+      helper.delete_volume(session, volume[:id])
     end
 
     validate_response 'valid metadata is provided' do
-      response = session.volume_service.request(:create_volume, :api_version => :v1) do |p|
-        p.display_name        = 'update-volume-test'
-        p.display_description = 'update-volume-test description'
-        p.size                = 1
-      end
-      volume_id = response.body[:volume][:id]
-
-      sleep 5 if VCR.current_cassette.recording?
+      volume = helper.create_volume(session).body[:volume]
 
       response = session.volume_service.request(:update_volume, :api_version => :v1) do |p|
-        p.id       = volume_id
+        p.id       = volume[:id]
         p.metadata = { test_key: 'test_value' }
       end
 
       response.status.must_equal 200
       response.body.wont_be_nil
 
-      response = session.volume_service.request(:get_volume, :api_version => :v1) { |p| p.id = volume_id }
+      response = session.volume_service.request(:get_volume, :api_version => :v1) { |p| p.id = volume[:id] }
       response.body[:volume][:metadata].keys.must_include 'test_key'
       response.body[:volume][:metadata][:test_key].must_equal 'test_value'
 
-      session.volume_service.request(:delete_volume, :api_version => :v1) { |p| p.id = volume_id }
+      helper.delete_volume(session, volume[:id])
     end
 
     validate_response 'invalid volume id is provided' do

@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Aviator::Test
 
-  describe 'aviator/openstack/compute/requests/requests/v2/public/allocate_floating_ip' do
+  describe 'aviator/openstack/compute/requests/v2/public/allocate_floating_ip' do
 
     def create_request(session_data = get_session_data)
       klass.new(session_data)

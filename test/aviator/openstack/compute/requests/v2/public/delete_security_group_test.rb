@@ -15,7 +15,7 @@ class Aviator::Test
 
 
     def helper
-      Aviator::Test::RequestHelper
+      Aviator::Test::OpenstackHelper
     end
 
 
@@ -98,13 +98,10 @@ class Aviator::Test
 
 
     validate_response 'valid security group id is provided' do
-      security_group  = session.compute_service.request(:create_security_group) do |params|
-                          params[:name] = "securo"
-                          params[:description] = "secure group"
-                        end.body[:security_group]
+      security_group = helper.create_security_group(session).body[:security_group]
       security_group_id = security_group[:id]
 
-      response = session.compute_service.request :delete_security_group do |params|
+      response = session.compute_service.request :delete_security_group, :api_version => :v2 do |params|
         params[:id] = security_group_id
       end
 
@@ -116,7 +113,7 @@ class Aviator::Test
     validate_response 'invalid security group id type is provided' do
       string_id = 'stringyID'
 
-      response = session.compute_service.request :delete_security_group do |params|
+      response = session.compute_service.request :delete_security_group, :api_version => :v2 do |params|
         params[:id] = string_id
       end
 
@@ -131,7 +128,7 @@ class Aviator::Test
     validate_response 'non existent security group id is provided' do
       security_group_id = 99999
 
-      response = session.compute_service.request :delete_security_group do |params|
+      response = session.compute_service.request :delete_security_group, :api_version => :v2 do |params|
         params[:id] = security_group_id
       end
 
