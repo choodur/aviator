@@ -2,10 +2,10 @@
 http_interactions:
 - request:
     method: post
-    uri: <OPENSTACK_ADMIN_HOST_URI>:5000/v2.0/tokens
+    uri: "<OPENSTACK_ADMIN_HOST_URI>:5000/v2.0/tokens"
     body:
       encoding: UTF-8
-      string: ! '{"auth":{"passwordCredentials":{"username":"somebogususer","password":"doesitreallymatter?"}}}'
+      string: '{"auth":{"<OPENSTACK_ADMIN_PASSWORD>Credentials":{"username":"somebogususer","<OPENSTACK_ADMIN_PASSWORD>":"doesitreallymatter?"}}}'
     headers:
       Content-Type:
       - application/json
@@ -16,20 +16,22 @@ http_interactions:
       code: 401
       message: 
     headers:
+      www-authenticate:
+      - Keystone uri="http://192.168.56.11:5000/"
       vary:
       - X-Auth-Token
       content-type:
       - application/json
       content-length:
-      - '98'
+      - '99'
       date:
-      - Wed, 04 Sep 2013 21:37:03 GMT
+      - Tue, 11 Aug 2015 10:17:47 GMT
       connection:
       - close
     body:
-      encoding: US-ASCII
-      string: ! '{"error": {"message": "Could not find user: somebogususer", "code":
+      encoding: UTF-8
+      string: '{"error": {"message": "Could not find user, somebogususer.", "code":
         401, "title": "Unauthorized"}}'
     http_version: 
-  recorded_at: Wed, 04 Sep 2013 21:36:55 GMT
-recorded_with: VCR 2.5.0
+  recorded_at: Tue, 11 Aug 2015 10:17:47 GMT
+recorded_with: VCR 2.8.0

@@ -2,10 +2,10 @@
 http_interactions:
 - request:
     method: post
-    uri: <OPENSTACK_ADMIN_HOST_URI>:5000/v2.0/tokens
+    uri: "<OPENSTACK_ADMIN_HOST_URI>:5000/v2.0/tokens"
     body:
       encoding: UTF-8
-      string: ! '{"auth":{"passwordCredentials":{"username":"<OPENSTACK_ADMIN_USERNAME>","password":"<OPENSTACK_ADMIN_PASSWORD>"}}}'
+      string: '{"auth":{"<OPENSTACK_ADMIN_PASSWORD>Credentials":{"username":"<OPENSTACK_ADMIN_USERNAME>","<OPENSTACK_ADMIN_PASSWORD>":"<OPENSTACK_ADMIN_PASSWORD>"}}}'
     headers:
       Content-Type:
       - application/json
@@ -21,18 +21,18 @@ http_interactions:
       content-type:
       - application/json
       content-length:
-      - '339'
+      - '1317'
       date:
-      - Wed, 04 Sep 2013 21:37:03 GMT
+      - Tue, 11 Aug 2015 10:17:47 GMT
       connection:
       - close
     body:
-      encoding: US-ASCII
-      string: ! '{"access": {"token": {"issued_at": "2013-09-04T21:37:03.225297",
-        "expires": "2013-09-05T21:37:03Z", "id": "5335c316136548569fc0e9f0bc4b163f"},
+      encoding: UTF-8
+      string: '{"access": {"token": {"issued_at": "2015-08-11T10:17:47.655691", "expires":
+        "2015-08-11T11:17:47Z", "id": "MIIC+QYJKoZIhvcNAQcCoIIC6jCCAuYCAQExDTALBglghkgBZQMEAgEwggFHBgkqhkiG9w0BBwGgggE4BIIBNHsiYWNjZXNzIjogeyJ0b2tlbiI6IHsiaXNzdWVkX2F0IjogIjIwMTUtMDgtMTFUMTA6MTc6NDcuNjU1NjkxIiwgImV4cGlyZXMiOiAiMjAxNS0wOC0xMVQxMToxNzo0N1oiLCAiaWQiOiAicGxhY2Vob2xkZXIifSwgInNlcnZpY2VDYXRhbG9nIjogW10sICJ1c2VyIjogeyJ1c2VybmFtZSI6ICJhZG1pbiIsICJyb2xlc19saW5rcyI6IFtdLCAiaWQiOiAiMTY2M2RhZjlhMjAyNGRhY2EwYmM4YjExY2VlMDNlMWYiLCAicm9sZXMiOiBbXSwgIm5hbWUiOiAiYWRtaW4ifSwgIm1ldGFkYXRhIjogeyJpc19hZG1pbiI6IDAsICJyb2xlcyI6IFtdfX19MYIBhTCCAYECAQEwXDBXMQswCQYDVQQGEwJVUzEOMAwGA1UECAwFVW5zZXQxDjAMBgNVBAcMBVVuc2V0MQ4wDAYDVQQKDAVVbnNldDEYMBYGA1UEAwwPd3d3LmV4YW1wbGUuY29tAgEBMAsGCWCGSAFlAwQCATANBgkqhkiG9w0BAQEFAASCAQAeO7EUr9ztxO-ErHk934VCqBD5p-O+3QurtJ9MvgJ3iWTsszMbKdaQNitA1lHN5wds6gs-M61rkHBeE3i4QC6vC9csrhGYA+6tfsR3boYu4j6NZhD6mNCTV31YeDqj2cYqFFfv3CQHy-A-l+UM1SPA5H4Dbubf3J+EgxCQOo6J-O5TJ2ppldUEZ05c5agizQ59-q1Dsv0FNojSgeooU8PZBBdYNorsft+tdT8CLdXMS8fQ+sAUXrGnwPXox5vvEtWAODUkJ6hCl8UH9t+QHW7OszUPtjFR1mkUHD+1tyM-5Is3uJb7Iltf9f4l4+JWhTqyQPh6d-TnPA7jLeYHzu4E"},
         "serviceCatalog": [], "user": {"username": "<OPENSTACK_ADMIN_USERNAME>", "roles_links":
-        [], "id": "b4217edff9a14c3888439386a726ada9", "roles": [], "name": "<OPENSTACK_ADMIN_USERNAME>"},
-        "metadata": {"is_admin": 0, "roles": []}}}'
+        [], "id": "1663daf9a2024daca0bc8b11cee03e1f", "roles": [], "name": "<OPENSTACK_ADMIN_USERNAME>"},
+        "metadata": {"is_<OPENSTACK_ADMIN_USERNAME>": 0, "roles": []}}}'
     http_version: 
-  recorded_at: Wed, 04 Sep 2013 21:36:54 GMT
-recorded_with: VCR 2.5.0
+  recorded_at: Tue, 11 Aug 2015 10:17:47 GMT
+recorded_with: VCR 2.8.0
